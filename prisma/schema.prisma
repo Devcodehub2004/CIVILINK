@@ -1,0 +1,187 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+
+
+
+enum Role {
+  CITIZEN
+  AUTHORITY
+  ADMIN
+}
+
+enum IssueStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  REJECTED
+}
+
+enum Category {
+  ROAD
+  WATER
+  ELECTRICITY
+  SANITATION
+  OTHER
+}
+
+model User {
+  id            String    @id @default(uuid())
+  name          String
+  email         String    @unique
+  passwordHash  String?
+  phone         String?   @unique
+  avatarUrl     String?
+  role          Role      @default(CITIZEN)
+  points        Int       @default(0)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  reportedIssues    Issue[]             @relation("Reporter")
+  assignedIssues    Issue[]             @relation("AssignedAuthority")
+  participatedIssues IssueParticipant[]
+  upvotes           Upvote[]
+  comments          Comment[]
+  ratingsGiven      AuthorityRating[]   @relation("RatedBy")
+  ratingsReceived   AuthorityRating[]   @relation("Authority")
+  notifications     Notification[]
+  pointTransactions PointTransaction[]
+  refreshTokens     RefreshToken[]
+  otps              Otp[]
+  @@index([points(sort: Desc)]) 
+  @@index([role])
+
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+model Otp {
+  id        String   @id @default(uuid())
+  code      String
+  email     String
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@unique([email, code])
+}
+
+model Issue {
+  id                  String      @id @default(uuid())
+  title               String
+  description         String
+  category            Category
+  status              IssueStatus @default(OPEN)
+  imageUrl            String?
+  latitude            Float
+  longitude           Float
+  address             String
+  upvotesCount        Int         @default(0)
+  shareCount          Int         @default(0)
+  isCritical          Boolean     @default(false)
+  
+  reporterId          String
+  reporter            User        @relation("Reporter", fields: [reporterId], references: [id])
+  
+  assignedAuthorityId String?
+  assignedAuthority   User?       @relation("AssignedAuthority", fields: [assignedAuthorityId], references: [id])
+
+  createdAt           DateTime    @default(now())
+  updatedAt           DateTime    @updatedAt
+  resolvedAt          DateTime?
+
+  participants        IssueParticipant[]
+  upvotes             Upvote[]
+  comments            Comment[]
+  ratings             AuthorityRating[]
+  @@index([status])
+  @@index([createdAt])
+  @@index([category])
+  @@index([latitude, longitude]) 
+  // For fast map lookups!
+
+}
+
+model IssueParticipant {
+  id        String   @id @default(uuid())
+  issueId   String
+  issue     Issue    @relation(fields: [issueId], references: [id])
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  joinedAt  DateTime @default(now())
+
+  @@unique([issueId, userId])
+}
+
+model Upvote {
+  id        String   @id @default(uuid())
+  issueId   String
+  issue     Issue    @relation(fields: [issueId], references: [id])
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@unique([issueId, userId])
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  content   String
+  issueId   String
+  issue     Issue    @relation(fields: [issueId], references: [id])
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+model AuthorityRating {
+  id          String   @id @default(uuid())
+  rating      Int
+  feedback    String?
+  
+  authorityId String
+  authority   User     @relation("Authority", fields: [authorityId], references: [id])
+  
+  ratedById   String
+  ratedBy     User     @relation("RatedBy", fields: [ratedById], references: [id])
+  
+  issueId     String
+  issue       Issue    @relation(fields: [issueId], references: [id])
+  
+  createdAt   DateTime @default(now())
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  message   String
+  type      String
+  isRead    Boolean  @default(false)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+model PointTransaction {
+  id        String   @id @default(uuid())
+  points    Int
+  reason    String
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+}

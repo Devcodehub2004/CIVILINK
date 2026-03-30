@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>CIVILINK | Secure Access</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&amp;family=Noto+Serif:ital,wght@1,400&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "primary": "#FF4F00", // International Orange
+              "on-primary": "#ffffff",
+              "surface": "#FAF9F6", // Warm Off-White
+              "on-surface": "#141414", // Charcoal
+              "secondary": "#141414",
+              "on-secondary": "#FAF9F6",
+              "surface-container-low": "#f5f3f0",
+              "outline": "#777777",
+              "outline-variant": "#c6c6c6",
+              "surface-container": "#efeeeb",
+            },
+            fontFamily: {
+              "headline": ["Inter"],
+              "body": ["Noto Serif"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            background-color: #FAF9F6;
+            color: #141414;
+        }
+    </style>
+<style>
+        body {
+            min-height: max(884px, 100dvh);
+        }
+    </style>
+</head>
+<body class="font-label">
+<!-- TopAppBar -->
+<nav class="bg-[#FAF9F6] dark:bg-[#141414] docked full-width top-0 border-b border-[#141414] z-50">
+<div class="flex justify-between items-center w-full px-6 py-4 max-w-[1440px] mx-auto">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-2xl text-primary" data-icon="gavel">gavel</span>
+<span class="text-2xl font-bold tracking-tighter text-on-surface dark:text-[#FAF9F6] uppercase">CIVILINK</span>
+</div>
+<div class="hidden md:flex items-center space-x-8">
+<a class="text-outline dark:text-[#efeeeb] label-sm uppercase tracking-[0.2em] hover:text-primary transition-colors duration-200 px-2 py-1" href="#">HOME</a>
+<a class="text-outline dark:text-[#efeeeb] label-sm uppercase tracking-[0.2em] hover:text-primary transition-colors duration-200 px-2 py-1" href="#">EXPLORE</a>
+<a class="text-primary dark:text-primary font-bold border-b-2 border-primary label-sm uppercase tracking-[0.2em] px-2 py-1" href="#">LOGIN</a>
+</div>
+</div>
+</nav>
+<!-- Main Content Canvas -->
+<main class="min-h-screen flex items-center justify-center px-6 py-24 md:py-32">
+<div class="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
+<!-- Branding/Visual Side (Asymmetric Editorial Style) -->
+<div class="hidden lg:block space-y-12">
+<div class="space-y-4">
+<span class="label-sm uppercase tracking-[0.2em] text-outline">SECURE ARCHIVE ACCESS</span>
+<h1 class="text-[8vw] leading-[0.9] font-black uppercase tracking-[-0.05em] font-headline">
+                    CIVIC<br/><span class="text-primary">AUTHORITY</span>
+</h1>
+</div>
+<p class="text-xl font-body italic text-outline leading-relaxed max-w-md">
+                "Transparency is the cornerstone of a functional democracy. Access your civic records with institutional-grade security."
+            </p>
+<div class="flex items-center gap-6">
+<div class="h-[1px] w-24 bg-primary"></div>
+<span class="label-sm uppercase tracking-[0.2em]">EST. 2024</span>
+</div>
+</div>
+<!-- Auth Container -->
+<div class="bg-surface-container-low p-8 md:p-16 rounded-xl relative overflow-hidden border border-on-surface/5">
+<!-- Login View -->
+<section class="space-y-12" id="login-form">
+<div class="space-y-2">
+<span class="label-sm uppercase tracking-[0.2em] text-primary font-bold">Authentication</span>
+<h2 class="text-4xl font-black font-headline uppercase tracking-tight">Login to CiviLink</h2>
+</div>
+<form class="space-y-8">
+<div class="space-y-6">
+<div class="relative">
+<label class="label-sm uppercase tracking-widest text-on-surface mb-2 block font-medium">Phone Number</label>
+<input class="w-full bg-transparent border-b border-on-surface py-4 focus:border-primary focus:ring-0 outline-none transition-all placeholder:text-outline/40" placeholder="+1 (555) 000-0000" type="tel"/>
+</div>
+<div class="relative">
+<label class="label-sm uppercase tracking-widest text-on-surface mb-2 block font-medium">Password</label>
+<input class="w-full bg-transparent border-b border-on-surface py-4 focus:border-primary focus:ring-0 outline-none transition-all placeholder:text-outline/40" placeholder="••••••••" type="password"/>
+</div>
+</div>
+<div class="pt-4">
+<button class="w-full bg-primary text-on-primary rounded-full py-5 font-bold uppercase tracking-widest hover:scale-[1.02] transition-transform active:scale-95 shadow-lg shadow-primary/20" type="submit">
+                            LOGIN
+                        </button>
+</div>
+</form>
+<div class="text-center pt-8 border-t border-outline/20">
+<button class="label-sm uppercase tracking-widest text-outline hover:text-primary transition-colors">
+                        Don't have an account? <span class="font-bold border-b border-primary text-primary">Register</span>
+</button>
+</div>
+</section>
+<!-- Floating Editorial Element -->
+<div class="absolute -bottom-8 -right-8 opacity-[0.03] pointer-events-none">
+<span class="material-symbols-outlined text-[15rem]" data-icon="gavel">gavel</span>
+</div>
+</div>
+</div>
+</main>
+<!-- Supplemental Section: Registration Context (Hidden by default) -->
+<section class="hidden bg-surface-container py-24 px-6">
+<div class="max-w-xl mx-auto space-y-12">
+<h3 class="text-3xl font-black font-headline uppercase">New Citizen Registration</h3>
+<div class="grid grid-cols-1 gap-8">
+<div class="space-y-2">
+<label class="label-sm uppercase tracking-widest text-on-surface">Full Name</label>
+<input class="w-full bg-transparent border-b border-on-surface py-3 outline-none focus:border-primary" type="text"/>
+</div>
+<div class="space-y-2">
+<label class="label-sm uppercase tracking-widest text-on-surface">Email Address</label>
+<input class="w-full bg-transparent border-b border-on-surface py-3 outline-none focus:border-primary" type="email"/>
+</div>
+<div class="space-y-2">
+<label class="label-sm uppercase tracking-widest text-on-surface">Phone</label>
+<input class="w-full bg-transparent border-b border-on-surface py-3 outline-none focus:border-primary" type="tel"/>
+</div>
+<div class="space-y-2">
+<label class="label-sm uppercase tracking-widest text-on-surface">Create Password</label>
+<input class="w-full bg-transparent border-b border-on-surface py-3 outline-none focus:border-primary" type="password"/>
+</div>
+<button class="bg-primary text-on-primary rounded-full py-5 font-bold uppercase tracking-widest shadow-lg shadow-primary/20">
+                CREATE ACCOUNT
+            </button>
+</div>
+</div>
+</section>
+<!-- BottomNavBar (Mobile Only) -->
+<div class="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 py-3 pb-safe bg-[#FAF9F6]/80 dark:bg-[#141414]/80 backdrop-blur-xl border-t border-[#141414]">
+<a class="flex flex-col items-center justify-center text-on-surface dark:text-[#FAF9F6] opacity-60 px-4 py-2 hover:opacity-100 hover:text-primary transition-all duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="text-[10px] uppercase tracking-[0.2em] font-medium mt-1">HOME</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface dark:text-[#FAF9F6] opacity-60 px-4 py-2 hover:opacity-100 hover:text-primary transition-all duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="explore">explore</span>
+<span class="text-[10px] uppercase tracking-[0.2em] font-medium mt-1">EXPLORE</span>
+</a>
+<a class="flex flex-col items-center justify-center text-primary px-4 py-2 hover:scale-110 transition-all duration-200" href="#">
+<span class="material-symbols-outlined font-bold" data-icon="add_circle">add_circle</span>
+<span class="text-[10px] uppercase tracking-[0.2em] font-black mt-1">REPORT</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-primary text-on-primary rounded-full px-6 py-2 scale-105 transition-all duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+<span class="text-[10px] uppercase tracking-[0.2em] font-medium mt-1">PROFILE</span>
+</a>
+</div>
+</body></html>

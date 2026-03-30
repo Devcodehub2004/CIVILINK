@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 250 60" width="100%" height="100%">
+  <!-- Network Nodes Icon (Left) -->
+  <g transform="translate(10, 10)">
+    <!-- Links -->
+    <line x1="10" y1="25" x2="35" y2="5" stroke="#005b9f" stroke-width="4" stroke-linecap="round"/>
+    <line x1="35" y1="5" x2="25" y2="35" stroke="#68b444" stroke-width="4" stroke-linecap="round"/>
+    <line x1="10" y1="25" x2="25" y2="35" stroke="#005b9f" stroke-width="4" stroke-linecap="round"/>
+    <line x1="35" y1="5" x2="60" y2="20" stroke="#005b9f" stroke-width="4" stroke-linecap="round"/>
+    <line x1="25" y1="35" x2="70" y2="10" stroke="#68b444" stroke-width="4" stroke-linecap="round"/>
+    <line x1="60" y1="20" x2="70" y2="10" stroke="#68b444" stroke-width="4" stroke-linecap="round"/>
+    
+    <!-- Nodes -->
+    <circle cx="10" cy="25" r="5" fill="#005b9f"/>
+    <circle cx="35" cy="5" r="5" fill="#005b9f"/>
+    <circle cx="25" cy="35" r="5" fill="#68b444"/>
+    <circle cx="70" cy="10" r="4" fill="#68b444"/>
+    <circle cx="60" cy="20" r="6" fill="#005b9f"/>
+  </g>
+  
+  <!-- Main Text (Right) -->
+  <g transform="translate(90, 42)">
+    <text x="0" y="0" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-weight="900" font-size="34" letter-spacing="-1" fill="#005b9f">Civi<tspan fill="#68b444">Link</tspan></text>
+  </g>
+</svg>
