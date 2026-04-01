@@ -1,6 +1,5 @@
 import { Router, Request, Response } from "express";
 import { prisma, sendSuccess, sendError, authenticate, authorize } from "./lib";
-import { generateAISummary } from "./gemini";
 
 const router = Router();
 
@@ -63,28 +62,10 @@ export const updateUserRole = async (req: Request, res: Response) => {
   }
 };
 
-export const getAISummary = async (req: Request, res: Response) => {
-  try {
-    const issues = await prisma.issue.findMany({
-      where: { status: "OPEN" },
-      take: 20,
-    });
-
-    if (issues.length === 0) {
-      return sendSuccess(res, "No open issues to summarize.");
-    }
-
-    const summary = await generateAISummary(issues);
-    return sendSuccess(res, summary);
-  } catch (error: any) {
-    return sendError(res, error.message);
-  }
-};
 
 // --- ROUTES ---
 
 router.get("/stats", authenticate, authorize(["ADMIN"]), getStats);
-router.get("/ai-summary", authenticate, authorize(["ADMIN"]), getAISummary);
 router.post("/assign", authenticate, authorize(["ADMIN"]), assignIssue);
 router.patch("/users/:id/role", authenticate, authorize(["ADMIN"]), updateUserRole);
 

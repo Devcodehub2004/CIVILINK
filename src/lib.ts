@@ -83,13 +83,21 @@ import nodemailer from "nodemailer";
 
 const emailTransporter = nodemailer.createTransport({
   service: "gmail",
+  pool: true,        // Reuse SMTP connections instead of opening one per email
+  maxConnections: 3,
+  maxMessages: 50,
   auth: {
     user: process.env.SMTP_EMAIL,
     pass: process.env.SMTP_PASSWORD,
   },
 });
 
-export const sendOtpEmail = async (email: string, otp: string) => {
+// Pre-verify the SMTP connection at startup so the first OTP doesn't pay a cold-start cost
+emailTransporter.verify().catch((err) => {
+  console.warn("[EMAIL] SMTP connection could not be pre-verified:", err.message);
+});
+
+export const sendOtpEmail = (email: string, otp: string) => {
   const mailOptions = {
     from: `"CiviLink" <${process.env.SMTP_EMAIL}>`,
     to: email,
@@ -113,7 +121,10 @@ export const sendOtpEmail = async (email: string, otp: string) => {
     `,
   };
 
-  await emailTransporter.sendMail(mailOptions);
+  // Fire-and-forget: send email in background, don't block the API response
+  emailTransporter.sendMail(mailOptions).catch((err) => {
+    console.error(`[EMAIL] Failed to send OTP to ${email}:`, err.message);
+  });
 };
 
 

@@ -14,8 +14,6 @@
   },
   "dependencies": {
 
-    "@google/genai": "^1.29.0",
-    "@google/generative-ai": "^0.24.1",
     "@prisma/client": "^6.4.1",
     "@tailwindcss/vite": "^4.2.2",
     "@types/bcryptjs": "^2.4.6",

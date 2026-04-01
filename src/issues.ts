@@ -1,4 +1,3 @@
-import { analyzeIssueWithAI } from "./gemini";
 import { Router, Request, Response } from "express";
 import { z } from "zod";
 import fs from "fs";
@@ -32,10 +31,8 @@ export const createIssue = async (req: Request, res: Response) => {
   try {
     const validatedData = issueSchema.parse(req.body);
     const { userId } = (req as any).user;
-    // --- AI ANALYSIS ---
-    const aiResult = await analyzeIssueWithAI(validatedData.title, validatedData.description);
-    const category = aiResult?.category || validatedData.category;
-    const isCritical = aiResult?.isCritical || false;
+    const category = validatedData.category;
+    const isCritical = false;
 
     let imageUrl = validatedData.imageUrl || null;
     if (req.file) {

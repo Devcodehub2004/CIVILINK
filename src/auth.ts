@@ -40,18 +40,20 @@ export const sendOtp = async (req: Request, res: Response) => {
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
-    // Store it in DB (Delete any old OTP for this email first)
-    await prisma.otp.deleteMany({ where: { email } });
-    await prisma.otp.create({
-      data: {
-        code: otp,
-        email,
-        expiresAt: new Date(Date.now() + 5 * 60 * 1000), // 5 minutes
-      },
-    });
+    // Batch delete + create in a single DB transaction (one roundtrip)
+    await prisma.$transaction([
+      prisma.otp.deleteMany({ where: { email } }),
+      prisma.otp.create({
+        data: {
+          code: otp,
+          email,
+          expiresAt: new Date(Date.now() + 5 * 60 * 1000), // 5 minutes
+        },
+      }),
+    ]);
 
-    // Send OTP via email
-    await sendOtpEmail(email, otp);
+    // Fire-and-forget — email sends in the background, response returns instantly
+    sendOtpEmail(email, otp);
 
     console.log(`\n[EMAIL] OTP for ${email}: ${otp}\n`);
     return sendSuccess(res, null, "OTP sent to your email successfully");
