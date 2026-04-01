@@ -23,19 +23,21 @@ async function startServer() {
   const io = new Server(httpServer, {
     cors: {
       origin: "*",
-      methods: ["GET", "POST"]
-    }
+      methods: ["GET", "POST"],
+    },
   });
 
-  const PORT = 3000;
-  
+  const PORT = process.env.PORT || 3000; // ✅ Correct!
+
   // Trust proxy for express-rate-limit
-  app.set('trust proxy', 1);
+  app.set("trust proxy", 1);
 
   // Middlewares
-  app.use(helmet({
-    contentSecurityPolicy: false, // Disable for Vite dev
-  }));
+  app.use(
+    helmet({
+      contentSecurityPolicy: false, // Disable for Vite dev
+    }),
+  );
   app.use(cors());
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
@@ -44,7 +46,7 @@ async function startServer() {
   const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
     limit: 100, // Limit each IP to 100 requests per windowMs
-    standardHeaders: 'draft-7',
+    standardHeaders: "draft-7",
     legacyHeaders: false,
   });
   app.use("/api", limiter);
@@ -52,7 +54,7 @@ async function startServer() {
   // Socket.io setup
   io.on("connection", (socket) => {
     console.log("A user connected:", socket.id);
-    
+
     socket.on("join_issue", (issueId) => {
       socket.join(`issue_${issueId}`);
     });
@@ -88,22 +90,29 @@ async function startServer() {
     });
     app.use(vite.middlewares);
   } else {
-    const distPath = path.join(process.cwd(), 'dist');
+    const distPath = path.join(process.cwd(), "dist");
     app.use(express.static(distPath));
-    app.get('*', (req, res) => {
-      res.sendFile(path.join(distPath, 'index.html'));
+    app.get("*", (req, res) => {
+      res.sendFile(path.join(distPath, "index.html"));
     });
   }
 
   // Global Error Handler
-  app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-    console.error(err.stack);
-    res.status(err.status || 500).json({
-      success: false,
-      message: err.message || "Internal Server Error",
-      errors: err.errors || []
-    });
-  });
+  app.use(
+    (
+      err: any,
+      req: express.Request,
+      res: express.Response,
+      next: express.NextFunction,
+    ) => {
+      console.error(err.stack);
+      res.status(err.status || 500).json({
+        success: false,
+        message: err.message || "Internal Server Error",
+        errors: err.errors || [],
+      });
+    },
+  );
 
   httpServer.listen(PORT, "0.0.0.0", () => {
     console.log(`Server running on http://localhost:${PORT}`);
