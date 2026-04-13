@@ -78,28 +78,17 @@ cloudinary.config({
 });
 export { cloudinary };
 
-// 7. Nodemailer Configuration
-import nodemailer from "nodemailer";
+// 7. Resend Configuration
+import { Resend } from "resend";
 
-const emailTransporter = nodemailer.createTransport({
-  service: "gmail",
-  pool: true,        // Reuse SMTP connections instead of opening one per email
-  maxConnections: 3,
-  maxMessages: 50,
-  auth: {
-    user: process.env.SMTP_EMAIL,
-    pass: process.env.SMTP_PASSWORD,
-  },
-});
-
-// Pre-verify the SMTP connection at startup so the first OTP doesn't pay a cold-start cost
-emailTransporter.verify().catch((err) => {
-  console.warn("[EMAIL] SMTP connection could not be pre-verified:", err.message);
-});
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 export const sendOtpEmail = (email: string, otp: string) => {
-  const mailOptions = {
-    from: `"CiviLink" <${process.env.SMTP_EMAIL}>`,
+  const fromEmail = process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev";
+
+  // Fire-and-forget: send email in background, don't block the API response
+  resend.emails.send({
+    from: `CiviLink <${fromEmail}>`,
     to: email,
     subject: "Your CiviLink Verification Code",
     html: `
@@ -119,11 +108,8 @@ export const sendOtpEmail = (email: string, otp: string) => {
         </div>
       </div>
     `,
-  };
-
-  // Fire-and-forget: send email in background, don't block the API response
-  emailTransporter.sendMail(mailOptions).catch((err) => {
-    console.error(`[EMAIL] Failed to send OTP to ${email}:`, err.message);
+  }).catch((err) => {
+    console.error(`[RESEND] Failed to send OTP to ${email}:`, err.message);
   });
 };
 
