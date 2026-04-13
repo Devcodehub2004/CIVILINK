@@ -50,108 +50,128 @@ export const Login = () => {
   };
 
   return (
-    <div className="min-h-[90vh] flex flex-col items-center justify-center px-6">
-      <motion.div
-        initial={{ opacity: 0, y: 50 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-lg"
-      >
-        <span className="label-sm text-outline mb-4 block">IDENTIFICATION // 01</span>
-        <h1 className="text-5xl md:text-6xl font-black tracking-tighter uppercase mb-2 leading-none">
-          {step === 1 ? 'Welcome Back' : 'Verify Portal'}
-        </h1>
-        <p className="font-body italic text-lg opacity-60 mb-12">
-          {step === 1 
-            ? "Reconnect to the civic governance network." 
-            : `Enter the 6-digit access code sent to ${email}`}
-        </p>
+    <main className="min-h-[90vh] flex items-center justify-center px-6 py-24 md:py-32 max-w-[1440px] mx-auto overflow-hidden">
+      <div className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
+        
+        {/* Branding/Visual Side (Asymmetric Editorial Style) */}
+        <motion.div 
+          initial={{ opacity: 0, x: -50 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+          className="hidden lg:block space-y-12 pr-8 relative"
+        >
+          {/* Animated decorative ring */}
+          <div className="absolute -top-20 -left-10 w-48 h-48 border border-primary/20 rounded-full animate-pulse-ring pointer-events-none"></div>
 
-        {error && (
-          <div className="p-6 mb-8 bg-primary/10 text-primary text-sm font-bold uppercase tracking-widest border border-primary/20 rounded-xl flex flex-col gap-4">
-            <div className="flex items-center gap-2">
-              <span className="material-symbols-outlined text-xl">error</span>
-              <span>[ ERROR ]: {error}</span>
+          <div className="space-y-4 relative z-10">
+            <span className="label-sm uppercase tracking-[0.2em] text-outline">JOIN THE MOVEMENT</span>
+            <h1 className="text-6xl xl:text-[5.5rem] leading-[0.9] font-black uppercase tracking-[-0.05em] font-headline relative">
+              CIVIC<br/><span className="text-primary relative inline-block">IMPACT</span>
+            </h1>
+          </div>
+          <p className="text-xl font-body italic text-outline leading-relaxed max-w-md relative z-10">
+            "Your voice has power. Report issues, rally the community, and let the viral spread naturally bring the government's attention."
+          </p>
+          <div className="flex items-center gap-6 relative z-10">
+            <div className="h-[1px] w-24 bg-primary relative overflow-hidden">
+                <div className="absolute top-0 h-full w-full bg-white/50 -skew-x-12 animate-shine"></div>
             </div>
-            {error.toLowerCase().includes('not found') && (
-              <Link 
-                to="/register" 
-                className="bg-primary text-on-primary px-6 py-2 rounded-full text-center text-xs font-black hover:scale-105 transition-transform"
-              >
-                Create New Identity
-              </Link>
+            <span className="label-sm uppercase tracking-[0.2em]">EST. 2024</span>
+          </div>
+        </motion.div>
+
+        {/* Auth Container */}
+        <motion.div 
+          initial={{ opacity: 0, y: 50 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
+          className="bg-surface-container-low p-8 md:p-16 rounded-xl relative overflow-hidden border border-on-surface/5 shadow-2xl hover:shadow-3xl transition-shadow duration-500"
+        >
+          <section className="space-y-12 relative z-10" id="login-form">
+            <div className="space-y-2">
+              <span className="label-sm uppercase tracking-[0.2em] text-primary font-bold">Authentication</span>
+              <h2 className="text-4xl font-black font-headline uppercase tracking-tight relative inline-block">
+                Login to CiviLink
+              </h2>
+            </div>
+            
+            {error && (
+              <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="p-4 bg-primary/10 text-primary text-xs font-bold uppercase tracking-widest border border-primary/20 rounded-lg flex items-center gap-2">
+                <span className="material-symbols-outlined text-lg">error</span>
+                <span>[ ERROR ]: {error}</span>
+              </motion.div>
             )}
-          </div>
-        )}
+            
+            {successMsg && (
+              <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="p-4 bg-green-500/10 text-green-500 font-bold uppercase tracking-widest border border-green-500/20 rounded-lg flex items-center gap-3 text-xs">
+                <span className="material-symbols-outlined text-lg animate-scale-pulse">mark_email_read</span>
+                {successMsg}
+              </motion.div>
+            )}
 
-        {successMsg && (
-          <div className="p-6 mb-8 bg-green-500/10 text-green-400 text-sm font-bold uppercase tracking-widest border border-green-500/20 rounded-xl flex items-center gap-3">
-            <span className="material-symbols-outlined text-xl">mark_email_read</span>
-            {successMsg}
-          </div>
-        )}
-
-        <form onSubmit={step === 1 ? handleSendOtp : handleVerifyOtp} className="flex flex-col gap-6">
-          {step === 1 ? (
-            <div className="flex flex-col gap-2">
-              <label className="label-sm text-outline ml-6">Email Address</label>
-              <div className="relative">
-                <span className="material-symbols-outlined absolute left-6 top-1/2 -translate-y-1/2 text-xl opacity-40">mail</span>
-                <input
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-14 pr-8 py-5 bg-transparent border-2 border-on-surface rounded-full text-xl font-bold focus:bg-on-surface focus:text-surface transition-all outline-none"
-                  placeholder="you@example.com"
-                />
+            <form onSubmit={step === 1 ? handleSendOtp : handleVerifyOtp} className="space-y-8">
+              <div className="space-y-6">
+                {step === 1 ? (
+                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="relative">
+                    <label className="label-sm uppercase tracking-widest text-on-surface mb-2 block font-medium">Email Address</label>
+                    <input 
+                      type="email"
+                      value={email}
+                      required
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="w-full bg-transparent border-b border-on-surface py-4 focus:border-primary focus:ring-0 outline-none transition-all placeholder:text-outline/40" 
+                      placeholder="you@example.com" 
+                    />
+                  </motion.div>
+                ) : (
+                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="relative">
+                    <label className="label-sm uppercase tracking-widest text-on-surface mb-2 block font-medium">Verify Code</label>
+                    <input 
+                      type="text"
+                      maxLength={6}
+                      required
+                      value={otp}
+                      onChange={(e) => setOtp(e.target.value)}
+                      className="w-full bg-transparent border-b border-on-surface py-4 focus:border-primary focus:ring-0 outline-none transition-all placeholder:text-outline/40 font-mono tracking-[0.5em] text-center text-2xl" 
+                      placeholder="••••••" 
+                    />
+                    <button
+                      type="button"
+                      onClick={() => { setStep(1); setOtp(''); setError(''); setSuccessMsg(''); }}
+                      className="text-xs text-outline hover:text-primary transition-colors mt-4 block uppercase tracking-widest font-bold"
+                    >
+                      ← Use different email
+                    </button>
+                  </motion.div>
+                )}
               </div>
-            </div>
-          ) : (
-            <div className="flex flex-col gap-2">
-              <label className="label-sm text-outline ml-6">Verify Code</label>
-              <input
-                type="text"
-                required
-                maxLength={6}
-                value={otp}
-                onChange={(e) => setOtp(e.target.value)}
-                className="w-full px-8 py-5 bg-on-surface text-surface rounded-full text-center text-4xl tracking-[1em] font-black focus:ring-4 focus:ring-primary/40 transition-all outline-none"
-                placeholder="000000"
-              />
-              <button
-                type="button"
-                onClick={() => { setStep(1); setOtp(''); setError(''); setSuccessMsg(''); }}
-                className="text-sm text-outline hover:text-primary transition-colors mt-2 ml-6 self-start"
-              >
-                ← Use a different email
-              </button>
-            </div>
-          )}
 
-          <button
-            disabled={loading}
-            className="w-full bg-primary text-on-primary py-6 rounded-full font-bold uppercase tracking-[0.2em] hover:brightness-110 active:scale-95 disabled:opacity-50 disabled:grayscale transition-all flex items-center justify-center gap-3 text-lg"
-          >
-            {loading ? (
-              <span className="material-symbols-outlined animate-spin text-2xl">progress_activity</span>
-            ) : (
-              <>
-                <span className="material-symbols-outlined text-2xl">
-                  {step === 1 ? 'send' : 'verified_user'}
-                </span>
-                {step === 1 ? "Send Verification Code" : "Verify & Authenticate"}
-              </>
-            )}
-          </button>
-        </form>
+              <div className="pt-4 relative overflow-hidden group rounded-full">
+                <button 
+                  disabled={loading}
+                  type="submit"
+                  className="w-full bg-primary text-on-primary rounded-full py-5 font-bold uppercase tracking-widest hover:scale-[1.02] transition-transform active:scale-95 shadow-lg shadow-primary/20 disabled:opacity-50 disabled:grayscale relative z-10"
+                >
+                  {loading ? 'Processing...' : (step === 1 ? 'SEND VERIFICATION' : 'AUTHENTICATE')}
+                </button>
+                <div className="absolute top-0 left-0 h-full w-full bg-white/20 -skew-x-12 hidden group-hover:block animate-shine z-20 pointer-events-none"></div>
+              </div>
+            </form>
 
-        <div className="mt-12 flex flex-col items-center gap-4 border-t border-on-surface/10 pt-8">
-           <p className="label-sm text-outline">No credentials found?</p>
-           <Link to="/register" className="text-xl font-black uppercase tracking-tighter hover:text-primary transition-colors border-b-4 border-primary">
-             Join the Movement
-           </Link>
-        </div>
-      </motion.div>
-    </div>
+            <div className="text-center pt-8 border-t border-outline/20">
+              <Link to="/register" className="label-sm uppercase tracking-widest text-outline hover:text-primary transition-colors group">
+                Don't have an account? <span className="font-bold border-b border-primary text-primary inline-flex items-center gap-1">Register <span className="material-symbols-outlined text-[10px] opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all">arrow_forward</span></span>
+              </Link>
+            </div>
+          </section>
+          
+          {/* Floating Editorial Element */}
+          <div className="absolute -bottom-12 -right-12 opacity-[0.03] pointer-events-none animate-rotate-slow">
+            <span className="material-symbols-outlined text-[18rem]">gavel</span>
+          </div>
+        </motion.div>
+        
+      </div>
+    </main>
   );
 };

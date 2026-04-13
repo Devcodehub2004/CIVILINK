@@ -167,7 +167,6 @@ export const getIssueDetails = async (req: Request, res: Response) => {
       where: { id },
       include: {
         reporter: { select: { id: true, name: true, avatarUrl: true, points: true } },
-        assignedAuthority: { select: { id: true, name: true, avatarUrl: true } },
         comments: { include: { user: { select: { name: true, avatarUrl: true, points: true, role: true } } }, orderBy: { createdAt: "desc" } },
         _count: { select: { upvotes: true, participants: true } }
       }
@@ -190,14 +189,14 @@ export const upvoteIssue = async (req: Request, res: Response) => {
     });
 
     if (existingUpvote) {
-      await prisma.$transaction([
+      const [, updatedIssue] = await prisma.$transaction([
         prisma.upvote.delete({ where: { id: existingUpvote.id } }),
         prisma.issue.update({ where: { id }, data: { upvotesCount: { decrement: 1 } } })
       ]);
-      return sendSuccess(res, null, "Upvote removed");
+      return sendSuccess(res, { upvotesCount: updatedIssue.upvotesCount, action: "removed" }, "Upvote removed");
     }
 
-    const [upvote, issue] = await prisma.$transaction([
+    const [, issue] = await prisma.$transaction([
       prisma.upvote.create({ data: { issueId: id, userId } }),
       prisma.issue.update({ where: { id }, data: { upvotesCount: { increment: 1 } } })
     ]);
@@ -207,7 +206,7 @@ export const upvoteIssue = async (req: Request, res: Response) => {
       if (issue.upvotesCount === 10) await awardPoints(issue.reporterId, 5, "Issue reached 10 upvotes milestone");
     }
 
-    return sendSuccess(res, null, "Issue upvoted");
+    return sendSuccess(res, { upvotesCount: issue.upvotesCount, action: "added" }, "Issue upvoted");
   } catch (error: any) {
     return sendError(res, error.message);
   }
@@ -258,23 +257,26 @@ export const updateStatus = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
-    const { role } = (req as any).user;
+    const { userId, role } = (req as any).user;
 
-    if (role === "CITIZEN") return sendError(res, "Only authorities or admins can update status", 403);
+    const issue = await prisma.issue.findUnique({ where: { id } });
+    if (!issue) return sendError(res, "Issue not found", 404);
 
-    const issue = await prisma.issue.update({
+    if (issue.reporterId !== userId && role !== "ADMIN") {
+      return sendError(res, "Only the original reporter can update the status", 403);
+    }
+
+    const updatedIssue = await prisma.issue.update({
       where: { id },
       data: { status, resolvedAt: status === "RESOLVED" ? new Date() : null }
     });
 
-    if (status === "RESOLVED") {
-      await awardPoints(issue.reporterId, 20, "Your reported issue was resolved");
+    if (status === "RESOLVED" && issue.status !== "RESOLVED") {
+      await awardPoints(issue.reporterId, 20, "Your reported issue was marked as resolved");
       await createNotification(issue.reporterId, "Your reported issue has been resolved! +20 points awarded.", "RESOLVED", (req as any).io);
-    } else {
-      await createNotification(issue.reporterId, `Issue status updated to ${status}`, "STATUS_UPDATE", (req as any).io);
-    }
+    } // Skip notification about other status changes if it's the reporter making them!
 
-    return sendSuccess(res, issue, "Status updated");
+    return sendSuccess(res, updatedIssue, "Status updated");
   } catch (error: any) {
     return sendError(res, error.message);
   }

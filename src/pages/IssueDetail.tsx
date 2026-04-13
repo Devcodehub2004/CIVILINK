@@ -59,11 +59,13 @@ export const IssueDetail = () => {
 
   const handleUpvote = async () => {
     try {
-      await axios.post(`/api/issues/${id}/upvote`);
-      const res = await axios.get(`/api/issues/${id}`);
-      if (res.data.success) {
-        setIssue(res.data.data);
-      }
+      const res = await axios.post(`/api/issues/${id}/upvote`);
+      const { upvotesCount } = res.data.data;
+      setIssue((prev: any) => ({
+        ...prev,
+        upvotesCount,
+        _count: { ...prev._count, upvotes: upvotesCount }
+      }));
     } catch (err) {
       console.error('Failed to upvote', err);
     }
@@ -111,22 +113,43 @@ export const IssueDetail = () => {
             • {issue.status}
           </div>
           {issue.reporterId === JSON.parse(localStorage.getItem('user') || '{}').id && (
-            <button 
-              onClick={async () => {
-                if(window.confirm('Erase this record from the archive?')) {
-                  try {
-                    await axios.delete(`/api/issues/${issue.id}`);
-                    navigate('/dashboard');
-                  } catch (err) {
-                    alert('Deletion failed');
+            <div className="flex items-center gap-4 ml-4">
+              {issue.status !== 'RESOLVED' && (
+                <button 
+                  onClick={async () => {
+                    if(window.confirm('Mark this issue as fully resolved?')) {
+                      try {
+                        const res = await axios.patch(`/api/issues/${issue.id}/status`, { status: 'RESOLVED' });
+                        if (res.data.success) setIssue({ ...issue, status: 'RESOLVED' });
+                      } catch (err) {
+                        alert('Failed to resolve issue');
+                      }
+                    }
+                  }}
+                  title="Mark as Resolved"
+                  className="label-sm px-4 py-2 rounded-full border border-[#10B981] text-[#10B981] hover:bg-[#10B981] hover:text-white transition-colors"
+                >
+                  <span className="material-symbols-outlined text-sm align-middle mr-1">check_circle</span>
+                  Resolve
+                </button>
+              )}
+              <button 
+                onClick={async () => {
+                  if(window.confirm('Erase this record from the archive?')) {
+                    try {
+                      await axios.delete(`/api/issues/${issue.id}`);
+                      navigate('/dashboard');
+                    } catch (err) {
+                      alert('Deletion failed');
+                    }
                   }
-                }
-              }}
-              title="Delete this report"
-              className="ml-4 material-symbols-outlined text-primary hover:text-on-surface transition-colors"
-            >
-              delete
-            </button>
+                }}
+                title="Delete this report"
+                className="material-symbols-outlined text-primary hover:text-on-surface transition-colors"
+              >
+                delete
+              </button>
+            </div>
           )}
         </div>
         <h1 className="text-5xl md:text-7xl font-black tracking-tighter uppercase leading-none mb-8">
@@ -235,11 +258,7 @@ export const IssueDetail = () => {
               <div className="flex flex-col flex-1 bg-on-surface/5 p-4 rounded-xl border-2 border-transparent group-hover:border-on-surface/20 transition-colors">
                         <div className="flex items-center gap-3 mb-1 flex-wrap">
                           <span className="font-bold text-sm uppercase tracking-wide">{comment.user?.name || 'Anonymous'}</span>
-                          {comment.user?.role === 'AUTHORITY' && (
-                            <span className="flex items-center gap-1 text-[10px] font-black text-[#10B981] bg-[#10B981]/10 px-2 py-0.5 rounded-full uppercase tracking-wider border border-[#10B981]/20 shadow-[1px_1px_0px_#10B981]">
-                              <span className="material-symbols-outlined text-[10px]">verified_user</span> Official Reply
-                            </span>
-                          )}
+
                           <span className="label-sm opacity-50">• {formatTimeAgo(comment.createdAt)}</span>
                           <span className="text-[10px] font-bold text-secondary tracking-wider uppercase bg-secondary/10 px-2 py-0.5 rounded-full">{getBadge(comment.user?.points || 0)}</span>
                         </div>

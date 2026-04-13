@@ -6,7 +6,6 @@ async function main() {
   // Clear existing data
   await prisma.pointTransaction.deleteMany();
   await prisma.notification.deleteMany();
-  await prisma.authorityRating.deleteMany();
   await prisma.comment.deleteMany();
   await prisma.upvote.deleteMany();
   await prisma.issueParticipant.deleteMany();
@@ -26,15 +25,6 @@ async function main() {
     },
   });
 
-  const authority = await prisma.user.create({
-    data: {
-      name: "City Water Dept",
-      email: "water@city.gov",
-      passwordHash: null,
-      phone: "+2222222222",
-      role: Role.AUTHORITY,
-    },
-  });
 
   const citizen = await prisma.user.create({
     data: {
@@ -72,7 +62,6 @@ async function main() {
       longitude: 77.2100,
       address: "5th Avenue, New Delhi",
       reporterId: citizen.id,
-      assignedAuthorityId: authority.id,
       upvotesCount: 60,
     },
   });

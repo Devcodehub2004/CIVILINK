@@ -12,9 +12,7 @@ import { Server } from "socket.io";
 import authRoutes from "./src/auth";
 import users from "./src/users";
 import issues from "./src/issues";
-import authorities from "./src/authorities";
 import notifications from "./src/notifications";
-import admin from "./src/admin";
 import "./src/jobs";
 
 async function startServer() {
@@ -27,7 +25,7 @@ async function startServer() {
     },
   });
 
-  const PORT = process.env.PORT || 3000; // ✅ Correct!
+  const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000; // ✅ Correct!
 
   // Trust proxy for express-rate-limit
   app.set("trust proxy", 1);
@@ -74,9 +72,7 @@ async function startServer() {
   app.use("/api/auth", authRoutes);
   app.use("/api/users", users);
   app.use("/api/issues", issues);
-  app.use("/api/authorities", authorities);
   app.use("/api/notifications", notifications);
-  app.use("/api/admin", admin);
 
   app.get("/api/health", (req, res) => {
     res.json({ success: true, message: "Server is healthy" });

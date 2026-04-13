@@ -12,7 +12,7 @@ import { Dashboard } from './pages/Dashboard';
 import { IssueDetail } from './pages/IssueDetail';
 import { ReportIssue } from './pages/ReportIssue';
 import { Profile } from './pages/Profile';
-import { AuthorityDashboard } from './pages/AuthorityDashboard';
+
 
 function App() {
   return (
@@ -44,12 +44,6 @@ function App() {
                 </ProtectedRoute>
               } />
               
-              {/* Authority Route */}
-              <Route path="/authority" element={
-                <ProtectedRoute>
-                  <AuthorityDashboard />
-                </ProtectedRoute>
-              } />
 
               {/* Fallback */}
               <Route path="*" element={<Navigate to="/" />} />

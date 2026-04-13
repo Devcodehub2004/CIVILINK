@@ -50,40 +50,54 @@ export const Register = () => {
   };
 
   return (
-    <div className="min-h-[90vh] flex flex-col items-center justify-center px-6 py-12">
-      <motion.div
-        initial={{ opacity: 0, y: 50 }}
+    <main className="min-h-screen bg-surface-container flex flex-col items-center justify-center py-24 px-6 relative z-10 w-full overflow-hidden">
+      {/* Decorative text watermark with slow rotation */}
+      <div className="absolute top-0 right-0 pointer-events-none opacity-[0.03] overflow-hidden w-full h-full flex items-center justify-center z-[-1]">
+        <span className="text-[20vw] font-black uppercase tracking-tighter font-headline whitespace-nowrap text-on-surface scale-150 rotate-[-10deg] animate-rotate-slow" style={{ animationDuration: '40s' }}>REGISTER</span>
+      </div>
+
+      <motion.div 
+        initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-lg"
+        transition={{ duration: 0.8, ease: "easeOut" }}
+        className="w-full max-w-xl mx-auto space-y-12"
       >
-        <span className="label-sm text-outline mb-4 block">REGISTRATION // 01</span>
-        <h1 className="text-5xl md:text-6xl font-black tracking-tighter uppercase mb-2 leading-none">
-          {step === 1 ? 'Join the Movement' : 'Confirm Registration'}
-        </h1>
-        <p className="font-body italic text-lg opacity-60 mb-12">
-          {step === 1 
-            ? "Become a verified node in the civic network." 
-            : `Enter the access code sent to ${formData.email}`}
-        </p>
+        <div className="space-y-4">
+          <span className="label-sm uppercase tracking-[0.2em] text-primary font-bold">New Citizen Registration</span>
+          <h3 className="text-4xl md:text-5xl font-black font-headline uppercase tracking-tight">
+            {step === 1 ? 'Join the Movement' : 'Confirm Registration'}
+          </h3>
+          <p className="font-body italic text-lg opacity-60">
+            {step === 1 
+              ? "Become a verified node in the civic network. Transparent. Accountable. Driven by you." 
+              : `Enter the access code sent to ${formData.email}`}
+          </p>
+        </div>
 
         {error && (
-          <div className="p-6 mb-8 bg-primary/10 text-primary text-sm font-bold uppercase tracking-widest border border-primary/20 rounded-xl">
-            [ ERROR ]: {error}
-          </div>
+          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="p-4 bg-primary/10 text-primary text-xs font-bold uppercase tracking-widest border border-primary/20 rounded-lg flex items-center gap-2">
+            <span className="material-symbols-outlined text-lg">error</span>
+            <span>[ ERROR ]: {error}</span>
+          </motion.div>
         )}
 
         {successMsg && (
-          <div className="p-6 mb-8 bg-green-500/10 text-green-400 text-sm font-bold uppercase tracking-widest border border-green-500/20 rounded-xl flex items-center gap-3">
-            <span className="material-symbols-outlined text-xl">mark_email_read</span>
+          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="p-4 bg-green-500/10 text-green-500 font-bold uppercase tracking-widest border border-green-500/20 rounded-lg flex items-center gap-3 text-xs">
+            <span className="material-symbols-outlined text-lg animate-scale-pulse">mark_email_read</span>
             {successMsg}
-          </div>
+          </motion.div>
         )}
 
-        <form onSubmit={step === 1 ? handleSendOtp : handleRegister} className="flex flex-col gap-6">
+        <form onSubmit={step === 1 ? handleSendOtp : handleRegister} className="grid grid-cols-1 gap-8 bg-surface p-8 md:p-12 rounded-xl border border-on-surface/5 shadow-2xl relative">
+          
+          {/* Subtle pulse background logic for form */}
+          <div className="absolute -inset-4 bg-primary/5 rounded-2xl -z-10 blur-2xl animate-pulse-ring opacity-50"></div>
+
           {step === 1 ? (
-            <>
-              <div className="flex flex-col items-center justify-center mb-8 gap-4">
-                <label htmlFor="avatar-upload" className="relative w-32 h-32 rounded-full border-4 border-on-surface bg-surface cursor-pointer group overflow-hidden hover:border-primary transition-colors flex items-center justify-center shadow-lg">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-8">
+              {/* Optional Photo */}
+              <div className="flex flex-col items-center justify-center mb-4 gap-4">
+                <label htmlFor="avatar-upload" className="relative w-24 h-24 rounded-full border-2 border-primary/20 bg-surface cursor-pointer group overflow-hidden transition-colors flex items-center justify-center shadow-lg hover:border-primary/50 hover:shadow-primary/20">
                   {formData.avatarUrl ? (
                     <>
                       <img src={formData.avatarUrl} alt="Profile" className="w-full h-full object-cover" />
@@ -93,25 +107,22 @@ export const Register = () => {
                     </>
                   ) : (
                     <div className="flex flex-col items-center gap-1">
-                      <span className="material-symbols-outlined text-4xl opacity-40 group-hover:scale-110 transition-transform">add_a_photo</span>
+                      <span className="material-symbols-outlined text-3xl opacity-40 text-primary group-hover:scale-110 transition-transform">add_a_photo</span>
                     </div>
                   )}
                 </label>
 
-                <div className="flex flex-col items-center gap-3">
-                  <span className="label-sm text-outline tracking-widest bg-on-surface/5 px-3 py-1 rounded-full">[ OPTIONAL PROFILE PHOTO ]</span>
+                <div className="flex flex-col items-center gap-2">
+                  <span className="text-[10px] uppercase font-bold tracking-[0.2em] text-outline">Optional Profile Photo</span>
                   
                   {formData.avatarUrl && (
                     <div className="flex items-center gap-6 mt-1">
-                      <label htmlFor="avatar-upload" className="text-xs font-bold uppercase tracking-widest text-primary hover:text-primary/80 cursor-pointer flex items-center gap-1 transition-colors">
-                         <span className="material-symbols-outlined text-sm">edit</span> Edit
-                      </label>
                       <button 
                         type="button" 
                         onClick={() => setFormData(prev => ({ ...prev, avatarUrl: '' }))}
                         className="text-xs font-bold uppercase tracking-widest text-error hover:text-error/80 flex items-center gap-1 transition-colors"
                       >
-                         <span className="material-symbols-outlined text-sm">delete</span> Remove
+                         <span className="material-symbols-outlined text-sm">delete</span> Drop Image
                       </button>
                     </div>
                   )}
@@ -150,91 +161,90 @@ export const Register = () => {
                 />
               </div>
 
-              <div className="flex flex-col gap-2">
-                <label className="label-sm text-outline ml-6">Full Name</label>
-                <input
-                  type="text"
-                  required
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-8 py-5 bg-transparent border-2 border-on-surface rounded-full text-xl font-bold focus:bg-on-surface focus:text-surface transition-all outline-none"
-                  placeholder="John Doe"
-                />
-              </div>
-              <div className="flex flex-col gap-2">
-                <label className="label-sm text-outline ml-6">Email Address</label>
+              <div className="space-y-2 relative">
+                <label className="label-sm uppercase tracking-widest text-on-surface">Full Name</label>
                 <div className="relative">
-                  <span className="material-symbols-outlined absolute left-6 top-1/2 -translate-y-1/2 text-xl opacity-40">mail</span>
+                  <span className="material-symbols-outlined absolute left-0 bottom-4 text-xl opacity-40">person</span>
+                  <input
+                    type="text"
+                    required
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    className="w-full bg-transparent border-b border-on-surface py-4 pl-8 focus:border-primary focus:ring-0 outline-none transition-all placeholder:text-outline/40 font-medium"
+                    placeholder="John Doe"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2 relative">
+                <label className="label-sm uppercase tracking-widest text-on-surface">Email Address</label>
+                <div className="relative">
+                  <span className="material-symbols-outlined absolute left-0 bottom-4 text-xl opacity-40">mail</span>
                   <input
                     type="email"
                     required
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className="w-full pl-14 pr-8 py-5 bg-transparent border-2 border-on-surface rounded-full text-xl font-bold focus:bg-on-surface focus:text-surface transition-all outline-none"
+                    className="w-full bg-transparent border-b border-on-surface py-4 pl-8 focus:border-primary focus:ring-0 outline-none transition-all placeholder:text-outline/40 font-medium"
                     placeholder="you@example.com"
                   />
                 </div>
               </div>
-              <div className="flex flex-col gap-2">
-                <label className="label-sm text-outline ml-6">Phone Number <span className="opacity-40">(Optional)</span></label>
+
+              <div className="space-y-2 relative">
+                <label className="label-sm uppercase tracking-widest text-on-surface">Phone <span className="opacity-40">(Optional)</span></label>
                 <div className="relative">
-                  <span className="material-symbols-outlined absolute left-6 top-1/2 -translate-y-1/2 text-xl opacity-40">phone</span>
+                  <span className="material-symbols-outlined absolute left-0 bottom-4 text-xl opacity-40">phone</span>
                   <input
                     type="tel"
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    className="w-full pl-14 pr-8 py-5 bg-transparent border-2 border-on-surface rounded-full text-xl font-bold focus:bg-on-surface focus:text-surface transition-all outline-none"
-                    placeholder="+91 00000 00000"
+                    className="w-full bg-transparent border-b border-on-surface py-4 pl-8 focus:border-primary focus:ring-0 outline-none transition-all placeholder:text-outline/40 font-medium"
+                    placeholder="+1 (555) 000-0000"
                   />
                 </div>
               </div>
-            </>
+            </motion.div>
           ) : (
-            <div className="flex flex-col gap-2">
-              <label className="label-sm text-outline ml-6">Verify Token</label>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-2 relative">
+              <label className="label-sm uppercase tracking-widest text-on-surface">Verify Token</label>
               <input
                 type="text"
                 required
                 maxLength={6}
                 value={otp}
                 onChange={(e) => setOtp(e.target.value)}
-                className="w-full px-8 py-5 bg-on-surface text-surface rounded-full text-center text-4xl tracking-[1em] font-black focus:ring-4 focus:ring-primary/40 transition-all outline-none"
-                placeholder="000000"
+                className="w-full bg-transparent border-b border-on-surface py-4 focus:border-primary focus:ring-0 outline-none transition-all placeholder:text-outline/40 font-mono tracking-[0.5em] text-center text-2xl"
+                placeholder="••••••"
               />
               <button
                 type="button"
                 onClick={() => { setStep(1); setOtp(''); setError(''); setSuccessMsg(''); }}
-                className="text-sm text-outline hover:text-primary transition-colors mt-2 ml-6 self-start"
+                className="text-xs text-outline hover:text-primary transition-colors mt-4 block uppercase tracking-widest font-bold text-center w-full"
               >
                 ← Use a different email
               </button>
-            </div>
+            </motion.div>
           )}
 
-          <button
-            disabled={loading}
-            className="w-full bg-primary text-on-primary py-6 rounded-full font-bold uppercase tracking-[0.2em] hover:brightness-110 active:scale-95 disabled:opacity-50 disabled:grayscale transition-all flex items-center justify-center gap-3 text-lg"
-          >
-            {loading ? (
-              <span className="material-symbols-outlined animate-spin text-2xl">progress_activity</span>
-            ) : (
-              <>
-                <span className="material-symbols-outlined text-2xl">
-                  {step === 1 ? 'person_add' : 'task_alt'}
-                </span>
-                {step === 1 ? "Send Verification Code" : "Verify & Complete"}
-              </>
-            )}
-          </button>
+          <div className="pt-2 relative overflow-hidden group rounded-full">
+            <button
+              disabled={loading}
+              type="submit"
+              className="w-full bg-primary text-on-primary rounded-full py-5 font-bold uppercase tracking-widest shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 disabled:grayscale relative z-10"
+            >
+              {loading ? 'Processing...' : (step === 1 ? "SEND VERIFICATION" : "CREATE ACCOUNT")}
+            </button>
+            <div className="absolute top-0 left-0 h-full w-full bg-white/20 -skew-x-12 hidden group-hover:block animate-shine z-20 pointer-events-none"></div>
+          </div>
         </form>
 
-        <div className="mt-12 flex flex-col items-center gap-4 border-t border-on-surface/10 pt-8">
-           <p className="label-sm text-outline">Already registered?</p>
-           <Link to="/login" className="text-xl font-black uppercase tracking-tighter hover:text-primary transition-colors border-b-4 border-primary">
-             Back to Access Portal
+        <div className="text-center pt-8">
+           <Link to="/login" className="label-sm uppercase tracking-widest text-outline hover:text-primary transition-colors group">
+             Already registered? <span className="font-bold border-b border-primary text-primary inline-flex items-center gap-1">Login <span className="material-symbols-outlined text-[10px] opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all">arrow_forward</span></span>
            </Link>
         </div>
       </motion.div>
-    </div>
+    </main>
   );
 };

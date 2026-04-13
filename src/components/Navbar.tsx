@@ -205,15 +205,7 @@ export const Navbar = () => {
                         <span className="material-symbols-outlined text-lg opacity-70">manage_accounts</span>
                         Settings
                       </button>
-                      {(user.role === 'AUTHORITY' || user.role === 'ADMIN') && (
-                        <button 
-                          onClick={() => { setIsProfileDropdownOpen(false); navigate('/authority'); }}
-                          className="flex items-center gap-3 px-3 py-2 text-left hover:bg-primary/10 text-primary rounded-lg transition-colors text-sm font-bold uppercase tracking-widest"
-                        >
-                          <span className="material-symbols-outlined text-lg">admin_panel_settings</span>
-                          Gov Panel
-                        </button>
-                      )}
+
                       <button 
                         onClick={() => { setIsProfileDropdownOpen(false); logout(); navigate('/'); }}
                         className="flex items-center gap-3 px-3 py-2 text-left hover:bg-error/10 text-error rounded-lg transition-colors text-sm font-bold uppercase tracking-widest"

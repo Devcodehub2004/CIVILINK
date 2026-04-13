@@ -15,7 +15,6 @@ datasource db {
 
 enum Role {
   CITIZEN
-  AUTHORITY
   ADMIN
 }
 
@@ -47,12 +46,9 @@ model User {
   updatedAt     DateTime  @updatedAt
 
   reportedIssues    Issue[]             @relation("Reporter")
-  assignedIssues    Issue[]             @relation("AssignedAuthority")
   participatedIssues IssueParticipant[]
   upvotes           Upvote[]
   comments          Comment[]
-  ratingsGiven      AuthorityRating[]   @relation("RatedBy")
-  ratingsReceived   AuthorityRating[]   @relation("Authority")
   notifications     Notification[]
   pointTransactions PointTransaction[]
   refreshTokens     RefreshToken[]
@@ -99,9 +95,7 @@ model Issue {
   
   reporterId          String
   reporter            User        @relation("Reporter", fields: [reporterId], references: [id])
-  
-  assignedAuthorityId String?
-  assignedAuthority   User?       @relation("AssignedAuthority", fields: [assignedAuthorityId], references: [id])
+
 
   createdAt           DateTime    @default(now())
   updatedAt           DateTime    @updatedAt
@@ -110,7 +104,6 @@ model Issue {
   participants        IssueParticipant[]
   upvotes             Upvote[]
   comments            Comment[]
-  ratings             AuthorityRating[]
   @@index([status])
   @@index([createdAt])
   @@index([category])
@@ -151,22 +144,7 @@ model Comment {
   createdAt DateTime @default(now())
 }
 
-model AuthorityRating {
-  id          String   @id @default(uuid())
-  rating      Int
-  feedback    String?
-  
-  authorityId String
-  authority   User     @relation("Authority", fields: [authorityId], references: [id])
-  
-  ratedById   String
-  ratedBy     User     @relation("RatedBy", fields: [ratedById], references: [id])
-  
-  issueId     String
-  issue       Issue    @relation(fields: [issueId], references: [id])
-  
-  createdAt   DateTime @default(now())
-}
+
 
 model Notification {
   id        String   @id @default(uuid())

@@ -90,10 +90,11 @@ export const Landing = () => {
     e.stopPropagation();
     if (!user) return navigate('/login');
     try {
-      await axios.post(`/api/issues/${issueId}/upvote`);
+      const res = await axios.post(`/api/issues/${issueId}/upvote`);
+      const { upvotesCount } = res.data.data;
       setIssues(prevIssues => prevIssues.map(issue => {
         if (issue.id === issueId) {
-          return { ...issue, upvotesCount: (issue.upvotesCount || 0) + 1 };
+          return { ...issue, upvotesCount };
         }
         return issue;
       }));
@@ -201,23 +202,80 @@ export const Landing = () => {
           <span className="label-sm text-outline">01 // MISSION</span>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-px bg-on-surface border border-on-surface">
-          {[
-            { icon: 'rocket_launch', title: "Instant Reporting", desc: "Geotagged reports filed in seconds directly to relevant municipal departments.", link: "/report" },
-            { icon: 'groups', title: "Community Power", desc: "Upvote local concerns to prioritize community needs in the legislative pipeline.", link: "/dashboard" },
-            { icon: 'auto_awesome', title: "Auto Escalation", desc: "System-wide triggers ensure unresponsive reports reach higher oversight automatically.", link: "/register" },
-            { icon: 'verified', title: "Verified Results", desc: "Transparent tracking from initial report to final resolution, verified by the community.", link: "/dashboard" }
-          ].map((feature, i) => (
-            <Link 
-              key={i} 
-              to={feature.link}
-              title={`Read more about ${feature.title}`}
-              className="bg-surface p-10 group hover:bg-primary hover:text-on-primary transition-colors duration-300 block no-underline"
-            >
-              <span className="material-symbols-outlined text-4xl mb-8 text-primary group-hover:text-on-primary">{feature.icon}</span>
-              <h3 className="text-xl font-bold uppercase tracking-wide mb-4">{feature.title}</h3>
-              <p className="text-sm opacity-70 leading-relaxed">{feature.desc}</p>
-            </Link>
-          ))}
+          {/* Asset 1: Instant Reporting */}
+          <Link 
+            to="/report"
+            title="Read more about Instant Reporting"
+            className="bg-surface p-10 group hover:bg-primary/5 transition-colors duration-300 flex flex-col items-center text-center no-underline relative overflow-hidden"
+          >
+            <div className="relative w-32 h-32 flex items-center justify-center mb-8">
+                <div className="absolute inset-0 border-2 border-primary rounded-full animate-pulse-ring"></div>
+                <div className="absolute inset-0 border-2 border-primary rounded-full animate-pulse-ring" style={{ animationDelay: '0.5s' }}></div>
+                <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center text-white shadow-xl shadow-primary/30 relative overflow-hidden animate-float">
+                    <span className="material-symbols-outlined text-4xl">rocket_launch</span>
+                    <div className="absolute top-0 h-full w-full bg-gradient-to-r from-transparent via-white/30 to-transparent -skew-x-12 animate-shine"></div>
+                </div>
+            </div>
+            <h3 className="text-xl font-bold uppercase tracking-wide mb-4 group-hover:text-primary transition-colors">Instant Reporting</h3>
+            <p className="text-sm opacity-70 leading-relaxed">Geotagged reports filed in seconds directly to relevant municipal departments.</p>
+          </Link>
+
+          {/* Asset 2: Community Power */}
+          <div 
+            onClick={() => document.getElementById('live-activity')?.scrollIntoView({ behavior: 'smooth' })}
+            title="Upvote and prioritize community issues"
+            className="bg-surface p-10 group hover:bg-primary/5 transition-colors duration-300 flex flex-col items-center text-center no-underline relative overflow-hidden cursor-pointer"
+          >
+            <div className="relative w-32 h-32 flex items-center justify-center mb-8 animate-scale-pulse">
+                <div className="absolute -top-2 -left-2 w-12 h-12 bg-primary/10 rounded-full blur-xl"></div>
+                <div className="w-20 h-20 bg-surface border-2 border-primary rounded-full flex items-center justify-center text-primary shadow-lg">
+                    <span className="material-symbols-outlined text-4xl">groups</span>
+                </div>
+                <div className="absolute -bottom-1 -right-1 w-8 h-8 bg-primary rounded-full flex items-center justify-center text-white border-2 border-surface shadow-md">
+                    <span className="material-symbols-outlined text-sm">electric_bolt</span>
+                </div>
+            </div>
+            <h3 className="text-xl font-bold uppercase tracking-wide mb-4 group-hover:text-primary transition-colors">Community Power</h3>
+            <p className="text-sm opacity-70 leading-relaxed">Upvote local concerns to prioritize community needs in the legislative pipeline.</p>
+          </div>
+
+          {/* Asset 3: Auto Escalation */}
+          <div 
+            title="System-wide triggers ensure unresponsive reports reach higher oversight automatically."
+            className="bg-surface p-10 group hover:bg-primary/5 transition-colors duration-300 flex flex-col items-center text-center relative overflow-hidden cursor-default"
+          >
+            <div className="relative w-32 h-32 flex items-center justify-center mb-8">
+                <div className="absolute bottom-4 flex items-end gap-2 h-16">
+                    <div className="w-2 bg-primary/20 rounded-full bar-1"></div>
+                    <div className="w-2 bg-primary/40 rounded-full bar-2"></div>
+                    <div className="w-2 bg-primary/60 rounded-full bar-3"></div>
+                    <div className="w-2 bg-primary rounded-full bar-4"></div>
+                </div>
+                <div className="w-16 h-16 bg-surface border-2 border-on-surface/10 rounded-2xl flex items-center justify-center text-primary shadow-xl relative z-10 transition-transform group-hover:rotate-12 group-hover:scale-110 duration-300">
+                    <span className="material-symbols-outlined text-4xl">auto_awesome</span>
+                </div>
+            </div>
+            <h3 className="text-xl font-bold uppercase tracking-wide mb-4 group-hover:text-primary transition-colors">Auto Escalation</h3>
+            <p className="text-sm opacity-70 leading-relaxed">System-wide triggers ensure unresponsive reports reach higher oversight automatically.</p>
+          </div>
+
+          {/* Asset 4: Verified Results */}
+          <div 
+            title="Transparent tracking from initial report to final resolution, verified by the community."
+            className="bg-surface p-10 group hover:bg-primary/5 transition-colors duration-300 flex flex-col items-center text-center relative overflow-hidden cursor-default"
+          >
+            <div className="relative w-32 h-32 flex items-center justify-center mb-8">
+                <div className="absolute inset-0 border border-dashed border-primary/40 rounded-full animate-rotate-slow"></div>
+                <div className="w-20 h-20 bg-surface border-2 border-primary rounded-[24px] flex items-center justify-center text-primary shadow-xl relative z-10">
+                    <span className="material-symbols-outlined text-4xl">verified</span>
+                </div>
+                <div className="absolute -top-2 -right-2 w-10 h-10 bg-[#10B981] rounded-full flex items-center justify-center text-white border-4 border-surface shadow-lg z-20">
+                    <span className="material-symbols-outlined text-xl">check</span>
+                </div>
+            </div>
+            <h3 className="text-xl font-bold uppercase tracking-wide mb-4 group-hover:text-primary transition-colors">Verified Results</h3>
+            <p className="text-sm opacity-70 leading-relaxed">Transparent tracking from initial report to final resolution, verified by the community.</p>
+          </div>
         </div>
       </section>
 
@@ -368,6 +426,42 @@ export const Landing = () => {
             </button>
           </div>
         )}
+      </section>
+
+      {/* Newsletter / Bento Hero End */}
+      <section className="mb-32">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 h-full">
+          <div className="bg-on-surface text-surface p-12 rounded-xl flex flex-col justify-between min-h-[400px]">
+            <h2 className="text-5xl font-bold uppercase tracking-tighter leading-none">Ready to lead<br/>your community?</h2>
+            <div className="flex flex-col gap-6">
+              <p className="font-body italic text-xl opacity-80">Join 12k+ advocates making real change happen.</p>
+              <div className="relative border-b border-surface/30 focus-within:border-primary transition-colors pb-2">
+                <input className="w-full bg-transparent border-none outline-none py-2 text-xs tracking-widest uppercase placeholder:text-surface/40" placeholder="ENTER YOUR EMAIL" type="email"/>
+                <button className="absolute right-0 top-1/2 -translate-y-1/2 material-symbols-outlined text-primary hover:scale-110 transition-transform">trending_flat</button>
+              </div>
+            </div>
+          </div>
+          <div className="grid grid-rows-2 gap-8">
+            <div className="bg-surface-container p-8 rounded-xl border border-on-surface/10 flex items-center justify-between">
+              <div>
+                <span className="label-sm text-outline block mb-2">SYSTEM STATUS</span>
+                <div className="text-2xl font-bold uppercase tracking-tight">Network Active</div>
+              </div>
+              <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center text-white shadow-lg shadow-primary/20">
+                <span className="material-symbols-outlined">sensors</span>
+              </div>
+            </div>
+            <div className="bg-surface-container-high p-8 rounded-xl border border-on-surface/10 flex items-center justify-between">
+              <div>
+                <span className="label-sm text-outline block mb-2">PARTNERS</span>
+                <div className="text-2xl font-bold uppercase tracking-tight">42 Municipalities</div>
+              </div>
+              <div className="w-12 h-12 border-2 border-primary rounded-full flex items-center justify-center text-primary">
+                <span className="material-symbols-outlined">account_balance</span>
+              </div>
+            </div>
+          </div>
+        </div>
       </section>
     </div>
   );

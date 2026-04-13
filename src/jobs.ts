@@ -21,9 +21,8 @@ cron.schedule("0 * * * *", async () => {
       where: { id: issue.id },
       data: { status: "IN_PROGRESS" }
     });
-    if (issue.assignedAuthorityId) {
-      await createNotification(issue.assignedAuthorityId, `Issue escalated: ${issue.title} has 50+ upvotes and is pending for 72h.`, "ESCALATION");
-    }
+    // Now organically noticed, just notify the reporter that their issue is gaining traction
+    await createNotification(issue.reporterId, `Your issue "${issue.title}" has 50+ upvotes and is now tracked as IN_PROGRESS based on community attention.`, "ESCALATION");
   }
 
   // 2. If unresolved after 7 days with 100+ upvotes
@@ -42,10 +41,7 @@ cron.schedule("0 * * * *", async () => {
       where: { id: issue.id },
       data: { isCritical: true }
     });
-    // Notify all admins
-    const admins = await prisma.user.findMany({ where: { role: "ADMIN" } });
-    for (const admin of admins) {
-      await createNotification(admin.id, `CRITICAL ISSUE: ${issue.title} has 100+ upvotes and is unresolved after 7 days.`, "CRITICAL");
-    }
+    // Notify the reporter that it reached critical mass
+    await createNotification(issue.reporterId, `Your issue "${issue.title}" has reached CRITICAL mass (100+ upvotes)! The community is prioritizing it.`, "CRITICAL");
   }
 });

@@ -65,14 +65,12 @@ export const Dashboard = () => {
     e.preventDefault();
     e.stopPropagation();
     try {
-      await axios.post(`/api/issues/${issueId}/upvote`);
+      const res = await axios.post(`/api/issues/${issueId}/upvote`);
+      const { upvotesCount } = res.data.data;
       
-      // Optimistically update the UI to reflect the new count
       setMyIssues(prevIssues => prevIssues.map(issue => {
         if (issue.id === issueId) {
-          // Assuming it's a toggle, but for now we just increment for immediate feedback
-          // The backend handles the actual toggling logic correctly
-          return { ...issue, upvotesCount: (issue.upvotesCount || 0) + 1 };
+          return { ...issue, upvotesCount };
         }
         return issue;
       }));

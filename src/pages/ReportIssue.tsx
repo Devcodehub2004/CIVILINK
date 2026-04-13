@@ -3,6 +3,19 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { 
+  BarChart2, 
+  Droplet, 
+  Zap, 
+  Trash2, 
+  LayoutGrid, 
+  MapPin, 
+  Camera, 
+  Send,
+  Loader2,
+  X,
+  Edit2
+} from 'lucide-react';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -57,11 +70,11 @@ export const ReportIssue = () => {
   };
 
   const categories = [
-    { id: 'ROAD', label: 'Roads', icon: 'road' },
-    { id: 'WATER', label: 'Water', icon: 'water_drop' },
-    { id: 'ELECTRICITY', label: 'Power', icon: 'electric_bolt' },
-    { id: 'SANITATION', label: 'Waste', icon: 'delete' },
-    { id: 'OTHER', label: 'Misc', icon: 'category' }
+    { id: 'ROAD', label: 'ROADS', icon: BarChart2 },
+    { id: 'WATER', label: 'WATER', icon: Droplet },
+    { id: 'ELECTRICITY', label: 'POWER', icon: Zap },
+    { id: 'SANITATION', label: 'WASTE', icon: Trash2 },
+    { id: 'OTHER', label: 'MISC', icon: LayoutGrid }
   ];
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -81,95 +94,115 @@ export const ReportIssue = () => {
   };
 
   return (
-    <div className="max-w-[1440px] mx-auto px-6 py-12 md:py-24 mb-24">
-      <div className="max-w-4xl mx-auto">
+    <div className="min-h-screen bg-surface relative isolate py-20 px-6">
+      {/* Grain Overlay */}
+      <div 
+        className="fixed inset-0 pointer-events-none z-[9999] opacity-[0.04]"
+        style={{ backgroundImage: 'url("https://grainy-gradients.vercel.app/noise.svg")' }}
+      />
+
+      <div className="max-w-4xl mx-auto animate-float">
+        {/* Header */}
         <header className="mb-16">
-          <span className="label-sm text-outline block mb-4">ACTION PORTAL // NEW REPORT</span>
-          <h1 className="text-5xl md:text-7xl font-black tracking-tighter uppercase leading-none">
-            Report<br/>Incident.
+          <span className="text-[10px] font-bold text-neutral-400 tracking-[0.3em] uppercase block">
+            ACTION PORTAL // NEW REPORT
+          </span>
+          <h1 className="text-5xl md:text-7xl font-display leading-[0.85] mt-4 mb-6 tracking-tighter uppercase">
+            REPORT<br />INCIDENT.
           </h1>
-          <p className="font-body italic text-xl opacity-60 mt-6 md:w-2/3">
+          <p className="text-neutral-500 italic text-lg max-w-lg leading-relaxed">
             "Documenting civic failure is the first step toward collaborative restoration."
           </p>
         </header>
 
         {error && (
-          <div className="p-6 mb-12 bg-primary/10 text-primary text-sm font-bold uppercase tracking-widest border border-primary/20 rounded-xl">
+          <div className="p-6 mb-12 bg-primary/10 text-primary text-sm font-mono font-bold uppercase tracking-widest border border-primary/20 rounded-xl">
             [ TRACE ERROR ]: {error}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-12 gap-12">
-          {/* Main Controls */}
-          <div className="md:col-span-8 flex flex-col gap-10">
-            <div className="flex flex-col gap-3">
-              <label className="label-sm text-outline ml-6">Incident Title</label>
-              <input
-                type="text"
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-2 gap-16">
+          {/* Left Column: Inputs */}
+          <div className="space-y-10">
+            <div>
+              <label className="block text-[10px] font-bold text-neutral-400 tracking-[0.2em] uppercase mb-4">
+                INCIDENT TITLE
+              </label>
+              <input 
+                type="text" 
                 required
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                className="w-full px-8 py-5 bg-transparent border-2 border-on-surface rounded-full text-xl font-bold focus:bg-on-surface focus:text-surface transition-all outline-none"
-                placeholder="e.g., Burst Pipeline on 5th"
+                placeholder="e.g., Burst Pipeline on 5th" 
+                className="w-full bg-[#F3F3F3] border-1.5 border-transparent rounded-[24px] px-6 py-5 outline-none focus:border-primary focus:bg-white focus:shadow-[0_10px_20px_-5px_rgba(255,77,0,0.1)] transition-all font-medium"
               />
             </div>
 
-            <div className="flex flex-col gap-3">
-              <label className="label-sm text-outline ml-6">Deep Description</label>
-              <textarea
+            <div>
+              <label className="block text-[10px] font-bold text-neutral-400 tracking-[0.2em] uppercase mb-4">
+                DEEP DESCRIPTION
+              </label>
+              <textarea 
                 required
-                rows={4}
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                className="w-full px-8 py-6 bg-transparent border-2 border-on-surface rounded-[2.5rem] text-lg font-medium focus:bg-on-surface focus:text-surface transition-all outline-none resize-none"
-                placeholder="Describe parameters of the issue..."
+                placeholder="Describe parameters of the issue..." 
+                className="w-full bg-[#F3F3F3] border-1.5 border-transparent rounded-[24px] px-6 py-5 outline-none focus:border-primary focus:bg-white focus:shadow-[0_10px_20px_-5px_rgba(255,77,0,0.1)] transition-all font-medium min-h-[160px] resize-none"
               />
             </div>
 
-            <div className="flex flex-col gap-3">
-               <label className="label-sm text-outline ml-6">Precise Location</label>
-               <div className="relative group">
-                 <input
-                   type="text"
-                   required
-                   value={formData.address}
-                   onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                   className="w-full px-8 py-5 bg-transparent border-2 border-on-surface rounded-full text-xl font-bold pr-16 focus:bg-on-surface focus:text-surface transition-all outline-none"
-                   placeholder="Sector 4, Main Road..."
-                 />
-                 <span className="material-symbols-outlined absolute right-6 top-1/2 -translate-y-1/2 text-primary text-2xl group-hover:scale-110 transition-transform">location_on</span>
-               </div>
+            <div>
+              <label className="block text-[10px] font-bold text-neutral-400 tracking-[0.2em] uppercase mb-4">
+                PRECISE LOCATION
+              </label>
+              <div className="relative">
+                <input 
+                  type="text" 
+                  required
+                  value={formData.address}
+                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                  placeholder="Sector 4, Main Road..." 
+                  className="w-full bg-[#F3F3F3] border-1.5 border-transparent rounded-[24px] px-6 py-5 pr-14 outline-none focus:border-primary focus:bg-white focus:shadow-[0_10px_20px_-5px_rgba(255,77,0,0.1)] transition-all font-medium"
+                />
+                <MapPin className="absolute right-6 top-1/2 -translate-y-1/2 w-5 h-5 text-primary" />
+              </div>
             </div>
           </div>
 
-          {/* Configuration & Meta */}
-          <div className="md:col-span-4 flex flex-col gap-10">
-            <div className="flex flex-col gap-4">
-              <label className="label-sm text-outline">System Category</label>
-              <div className="grid grid-cols-2 gap-2">
-                {categories.map((cat) => (
-                  <button
-                    key={cat.id}
-                    type="button"
-                    onClick={() => setFormData({ ...formData, category: cat.id })}
-                    title={`Select ${cat.label} category`}
-                    className={cn(
-                      "flex flex-col items-center justify-center p-4 py-6 rounded-2xl border-2 transition-all group",
-                      formData.category === cat.id 
-                        ? "bg-primary border-primary text-on-primary" 
-                        : "border-on-surface/10 hover:border-on-surface text-on-surface hover:bg-on-surface/5"
-                    )}
-                  >
-                    <span className="material-symbols-outlined text-2xl mb-2">{cat.icon}</span>
-                    <span className="label-sm">{cat.label}</span>
-                  </button>
-                ))}
+          {/* Right Column: Categories & Media */}
+          <div className="space-y-10 flex flex-col">
+            <div>
+              <label className="block text-[10px] font-bold text-neutral-400 tracking-[0.2em] uppercase mb-4">
+                SYSTEM CATEGORY
+              </label>
+              <div className="grid grid-cols-3 gap-4">
+                {categories.map((cat) => {
+                  const Icon = cat.icon;
+                  return (
+                    <button
+                      key={cat.id}
+                      type="button"
+                      onClick={() => setFormData({ ...formData, category: cat.id })}
+                      className={cn(
+                        "rounded-[16px] p-4 flex flex-col items-center gap-2 transition-all cursor-pointer group",
+                        formData.category === cat.id
+                          ? "bg-primary text-white shadow-[0_10px_20px_-5px_rgba(255,77,0,0.3)]"
+                          : "bg-[#F3F3F3] hover:bg-[#EBEBEB] hover:-translate-y-0.5"
+                      )}
+                    >
+                      <Icon className={cn("w-5 h-5", formData.category === cat.id ? "text-white" : "text-on-surface")} />
+                      <span className="text-[9px] font-bold tracking-widest uppercase">{cat.label}</span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
-            <div className="flex flex-col gap-4">
-              <label className="label-sm text-outline">Media Capture</label>
-              <div className="relative aspect-square w-full">
+            <div>
+              <label className="block text-[10px] font-bold text-neutral-400 tracking-[0.2em] uppercase mb-4">
+                MEDIA CAPTURE
+              </label>
+              <div className="relative w-full">
                 <input
                   type="file"
                   accept="image/*"
@@ -179,19 +212,20 @@ export const ReportIssue = () => {
                 />
                 <label
                   htmlFor="image-upload"
-                  title="Upload evidence photo"
                   className={cn(
-                    "aspect-square w-full border-2 border-dashed rounded-[2rem] flex flex-col items-center justify-center gap-4 transition-all cursor-pointer overflow-hidden relative group",
-                    formData.imageUrl ? "border-primary border-solid" : "border-on-surface/20 hover:border-primary hover:bg-primary/5"
+                    "w-full aspect-[16/9] border-2 border-dashed rounded-[32px] flex flex-col items-center justify-center gap-3 transition-all cursor-pointer overflow-hidden relative group",
+                    formData.imageUrl 
+                      ? "border-primary border-solid" 
+                      : "border-[#D1D1D1] text-[#A3A3A3] hover:border-primary hover:bg-primary/[0.02] hover:text-primary"
                   )}
                 >
                   {uploading ? (
-                    <span className="material-symbols-outlined animate-spin text-5xl text-primary">progress_activity</span>
+                    <Loader2 className="w-8 h-8 animate-spin text-primary" />
                   ) : formData.imageUrl ? (
                     <>
                       <img src={formData.imageUrl} alt="Preview" className="w-full h-full object-cover" />
-                      <div className="absolute inset-0 bg-on-surface/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                        <span className="material-symbols-outlined text-white text-4xl">edit</span>
+                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Edit2 className="text-white w-6 h-6" />
                       </div>
                       <button 
                         type="button"
@@ -200,33 +234,31 @@ export const ReportIssue = () => {
                           e.stopPropagation();
                           setFormData(prev => ({ ...prev, imageUrl: '' }));
                         }}
-                        title="Remove image"
-                        className="absolute top-4 right-4 w-10 h-10 bg-primary text-on-primary rounded-full flex items-center justify-center hover:scale-110 transition-transform shadow-lg z-20"
+                        className="absolute top-4 right-4 w-8 h-8 bg-primary text-white rounded-full flex items-center justify-center hover:scale-110 transition-transform shadow-lg z-20"
                       >
-                        <span className="material-symbols-outlined text-xl">close</span>
+                        <X className="w-4 h-4" />
                       </button>
                     </>
                   ) : (
                     <>
-                      <span className="material-symbols-outlined text-5xl opacity-40 group-hover:opacity-100 group-hover:scale-110 transition-all">add_a_photo</span>
-                      <span className="label-sm opacity-40 group-hover:opacity-100">Attach Evidence</span>
+                      <Camera className="w-8 h-8 opacity-50 group-hover:opacity-100 transition-all" />
+                      <span className="text-[9px] font-bold tracking-[0.2em] uppercase">ATTACH EVIDENCE</span>
                     </>
                   )}
                 </label>
               </div>
             </div>
 
-            <button
+            <button 
               disabled={loading || uploading}
-              title="Submit your civic report"
-              className="mt-auto w-full bg-on-surface text-surface py-6 rounded-full font-bold uppercase tracking-[0.2em] hover:bg-primary hover:text-on-primary active:scale-95 disabled:opacity-50 transition-all flex items-center justify-center gap-3 text-lg"
+              className="mt-auto btn-submit shine-effect w-full bg-on-surface text-white rounded-[24px] py-5 font-bold uppercase text-xs tracking-[0.2em] flex items-center justify-center gap-3 hover:bg-black hover:-translate-y-0.5 hover:shadow-[0_20px_40px_-10px_rgba(0,0,0,0.3)] disabled:opacity-50 transition-all"
             >
               {loading ? (
-                <span className="material-symbols-outlined animate-spin text-2xl">progress_activity</span>
+                <Loader2 className="w-5 h-5 animate-spin" />
               ) : (
                 <>
-                  <span className="material-symbols-outlined text-2xl">upload_file</span>
-                  Transmit Report
+                  <Send className="w-5 h-5" />
+                  TRANSMIT REPORT
                 </>
               )}
             </button>
