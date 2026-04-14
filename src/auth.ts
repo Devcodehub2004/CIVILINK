@@ -52,8 +52,8 @@ export const sendOtp = async (req: Request, res: Response) => {
       }),
     ]);
 
-    // Fire-and-forget — email sends in the background, response returns instantly
-    sendOtpEmail(email, otp);
+    // Await email sending because serverless functions will terminate as soon as response is returned
+    await sendOtpEmail(email, otp);
 
     console.log(`\n[EMAIL] OTP for ${email}: ${otp}\n`);
     return sendSuccess(res, null, "OTP sent to your email successfully");

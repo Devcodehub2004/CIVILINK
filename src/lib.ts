@@ -28,11 +28,21 @@ export const verifyRefreshToken = (token: string) => {
 };
 
 // 4. Response Helpers
-export const sendSuccess = (res: Response, data: any, message: string = "Success", status: number = 200) => {
+export const sendSuccess = (
+  res: Response,
+  data: any,
+  message: string = "Success",
+  status: number = 200,
+) => {
   return res.status(status).json({ success: true, data, message });
 };
 
-export const sendError = (res: Response, message: string, status: number = 500, errors: any[] = []) => {
+export const sendError = (
+  res: Response,
+  message: string,
+  status: number = 500,
+  errors: any[] = [],
+) => {
   return res.status(status).json({ success: false, message, errors });
 };
 
@@ -44,7 +54,11 @@ export interface AuthRequest extends Request {
   };
 }
 
-export const authenticate = (req: AuthRequest, res: Response, next: NextFunction) => {
+export const authenticate = (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction,
+) => {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
     return sendError(res, "Unauthorized: No token provided", 401);
@@ -63,7 +77,11 @@ export const authenticate = (req: AuthRequest, res: Response, next: NextFunction
 export const authorize = (roles: string[]) => {
   return (req: AuthRequest, res: Response, next: NextFunction) => {
     if (!req.user || !roles.includes(req.user.role)) {
-      return sendError(res, "Forbidden: You don't have permission to access this resource", 403);
+      return sendError(
+        res,
+        "Forbidden: You don't have permission to access this resource",
+        403,
+      );
     }
     next();
   };
@@ -81,17 +99,26 @@ export { cloudinary };
 // 7. Resend Configuration
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// ✅ Correct — only called when actually needed
+function getResend() {
+  const key = process.env.RESEND_API_KEY;
+  if (!key) throw new Error("RESEND_API_KEY is not set");
+  return new Resend(key);
+}
 
-export const sendOtpEmail = (email: string, otp: string) => {
+export const sendOtpEmail = async (email: string, otp: string) => {
   const fromEmail = process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev";
 
-  // Fire-and-forget: send email in background, don't block the API response
-  resend.emails.send({
-    from: `CiviLink <${fromEmail}>`,
-    to: email,
-    subject: "Your CiviLink Verification Code",
-    html: `
+  try {
+    const resend = getResend();
+
+    // Await the email send so it doesn't get cancelled by serverless environments
+    await resend.emails
+      .send({
+        from: `CiviLink <${fromEmail}>`,
+        to: email,
+        subject: "Your CiviLink Verification Code",
+        html: `
       <div style="font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 480px; margin: 0 auto; background: #141414; border-radius: 16px; overflow: hidden;">
         <div style="padding: 40px 32px; text-align: center;">
           <h1 style="color: #E4E3E0; font-size: 28px; font-weight: 900; text-transform: uppercase; letter-spacing: -1px; margin: 0 0 8px 0;">CiviLink</h1>
@@ -108,11 +135,11 @@ export const sendOtpEmail = (email: string, otp: string) => {
         </div>
       </div>
     `,
-  }).catch((err) => {
-    console.error(`[RESEND] Failed to send OTP to ${email}:`, err.message);
-  });
+      });
+  } catch (err) {
+    console.error(`[RESEND] Failed to send OTP email:`, (err as Error).message);
+  }
 };
-
 
 // 8. Multer (Upload) Configuration
 import multer from "multer";
@@ -124,7 +151,10 @@ const storage = multer.diskStorage({
   },
   filename: (req, file, cb) => {
     const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    cb(null, file.fieldname + "-" + uniqueSuffix + path.extname(file.originalname));
+    cb(
+      null,
+      file.fieldname + "-" + uniqueSuffix + path.extname(file.originalname),
+    );
   },
 });
 
@@ -147,7 +177,11 @@ export const upload = multer({
 // --- GLOBAL SERVICES ---
 
 // 8. Points Service
-export const awardPoints = async (userId: string, points: number, reason: string) => {
+export const awardPoints = async (
+  userId: string,
+  points: number,
+  reason: string,
+) => {
   try {
     await prisma.$transaction([
       prisma.user.update({
@@ -168,7 +202,12 @@ export const awardPoints = async (userId: string, points: number, reason: string
 };
 
 // 9. Notification Service
-export const createNotification = async (userId: string, message: string, type: string, io?: any) => {
+export const createNotification = async (
+  userId: string,
+  message: string,
+  type: string,
+  io?: any,
+) => {
   try {
     const notification = await prisma.notification.create({
       data: {
@@ -187,4 +226,3 @@ export const createNotification = async (userId: string, message: string, type: 
     console.error("Notification Service Error:", error);
   }
 };
-
