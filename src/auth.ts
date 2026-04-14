@@ -59,7 +59,7 @@ export const sendOtp = async (req: Request, res: Response) => {
     return sendSuccess(res, null, "OTP sent to your email successfully");
   } catch (error: any) {
     console.error("Send OTP Error:", error);
-    return sendError(res, "Failed to send OTP. Please try again.");
+    return sendError(res, error.message || "Failed to send OTP. Please try again.");
   }
 };
 

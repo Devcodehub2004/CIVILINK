@@ -109,36 +109,38 @@ function getResend() {
 export const sendOtpEmail = async (email: string, otp: string) => {
   const fromEmail = process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev";
 
-  try {
-    const resend = getResend();
+  const resend = getResend();
 
-    // Await the email send so it doesn't get cancelled by serverless environments
-    await resend.emails
-      .send({
-        from: `CiviLink <${fromEmail}>`,
-        to: email,
-        subject: "Your CiviLink Verification Code",
-        html: `
-      <div style="font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 480px; margin: 0 auto; background: #141414; border-radius: 16px; overflow: hidden;">
-        <div style="padding: 40px 32px; text-align: center;">
-          <h1 style="color: #E4E3E0; font-size: 28px; font-weight: 900; text-transform: uppercase; letter-spacing: -1px; margin: 0 0 8px 0;">CiviLink</h1>
-          <p style="color: #999; font-size: 12px; text-transform: uppercase; letter-spacing: 4px; margin: 0;">Verification Code</p>
-        </div>
-        <div style="background: #1a1a1a; padding: 40px 32px; text-align: center; border-top: 1px solid #333; border-bottom: 1px solid #333;">
-          <p style="color: #999; font-size: 14px; margin: 0 0 20px 0;">Your one-time access code is:</p>
-          <div style="background: #E4E3E0; color: #141414; font-size: 36px; font-weight: 900; letter-spacing: 12px; padding: 20px 32px; border-radius: 12px; display: inline-block;">${otp}</div>
-          <p style="color: #666; font-size: 12px; margin: 20px 0 0 0;">This code expires in <strong style="color: #999;">5 minutes</strong></p>
-        </div>
-        <div style="padding: 24px 32px; text-align: center;">
-          <p style="color: #555; font-size: 11px; margin: 0;">If you didn't request this code, please ignore this email.</p>
-          <p style="color: #333; font-size: 10px; margin: 12px 0 0 0; text-transform: uppercase; letter-spacing: 2px;">© 2026 CiviLink — Intelligent Civic Action</p>
-        </div>
-      </div>
-    `,
-      });
-  } catch (err) {
-    console.error(`[RESEND] Failed to send OTP email:`, (err as Error).message);
+  // Await the email send so it doesn't get cancelled by serverless environments
+  const { data, error } = await resend.emails.send({
+    from: `CiviLink <${fromEmail}>`,
+    to: email,
+    subject: "Your CiviLink Verification Code",
+    html: `
+  <div style="font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 480px; margin: 0 auto; background: #141414; border-radius: 16px; overflow: hidden;">
+    <div style="padding: 40px 32px; text-align: center;">
+      <h1 style="color: #E4E3E0; font-size: 28px; font-weight: 900; text-transform: uppercase; letter-spacing: -1px; margin: 0 0 8px 0;">CiviLink</h1>
+      <p style="color: #999; font-size: 12px; text-transform: uppercase; letter-spacing: 4px; margin: 0;">Verification Code</p>
+    </div>
+    <div style="background: #1a1a1a; padding: 40px 32px; text-align: center; border-top: 1px solid #333; border-bottom: 1px solid #333;">
+      <p style="color: #999; font-size: 14px; margin: 0 0 20px 0;">Your one-time access code is:</p>
+      <div style="background: #E4E3E0; color: #141414; font-size: 36px; font-weight: 900; letter-spacing: 12px; padding: 20px 32px; border-radius: 12px; display: inline-block;">${otp}</div>
+      <p style="color: #666; font-size: 12px; margin: 20px 0 0 0;">This code expires in <strong style="color: #999;">5 minutes</strong></p>
+    </div>
+    <div style="padding: 24px 32px; text-align: center;">
+      <p style="color: #555; font-size: 11px; margin: 0;">If you didn't request this code, please ignore this email.</p>
+      <p style="color: #333; font-size: 10px; margin: 12px 0 0 0; text-transform: uppercase; letter-spacing: 2px;">© 2026 CiviLink — Intelligent Civic Action</p>
+    </div>
+  </div>
+`,
+  });
+
+  if (error) {
+    console.error(`[RESEND ERROR]:`, error);
+    throw new Error(`Email sending failed: ${error.message}`);
   }
+
+  return data;
 };
 
 // 8. Multer (Upload) Configuration
