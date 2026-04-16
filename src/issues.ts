@@ -58,7 +58,10 @@ export const createIssue = async (req: Request, res: Response) => {
 
     return sendSuccess(res, issue, "Issue reported successfully", 201);
   } catch (error: any) {
-    if (error.errors) return sendError(res, "Validation failed", 400, error.errors);
+    if (error instanceof z.ZodError) {
+      const msg = error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ');
+      return sendError(res, msg, 400, error.errors);
+    }
     return sendError(res, error.message);
   }
 };

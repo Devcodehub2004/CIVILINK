@@ -92,7 +92,10 @@ export const register = async (req: Request, res: Response) => {
 
     return sendSuccess(res, { user: { id: user.id, name, email, phone, role: user.role, avatarUrl: user.avatarUrl }, accessToken, refreshToken }, "User registered successfully");
   } catch (error: any) {
-    if (error.errors) return sendError(res, "Validation failed", 400, error.errors);
+    if (error instanceof z.ZodError) {
+      const msg = error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ');
+      return sendError(res, msg, 400, error.errors);
+    }
     return sendError(res, error.message);
   }
 };
