@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
 import axios from 'axios';
@@ -11,8 +11,49 @@ export const Register = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
+  const [googleLoading, setGoogleLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
+  // Check for Google OAuth hash in URL
+  useEffect(() => {
+    const hash = window.location.hash;
+    if (hash.includes('access_token=')) {
+      const params = new URLSearchParams(hash.substring(1));
+      const accessToken = params.get('access_token');
+      if (accessToken) {
+        // Clear hash so it doesn't stay in the URL
+        window.history.replaceState('', document.title, window.location.pathname + window.location.search);
+        
+        const processGoogleToken = async (token: string) => {
+          setGoogleLoading(true);
+          setError('');
+          try {
+            const res = await axios.post('/api/auth/google', {
+              credential: token,
+            });
+            if (res.data.success) {
+              login(res.data.data.user, res.data.data.accessToken);
+              navigate('/dashboard');
+            }
+          } catch (err: any) {
+            setError(err.response?.data?.message || 'Registration failed via Google');
+          } finally {
+            setGoogleLoading(false);
+          }
+        };
+        
+        processGoogleToken(accessToken);
+      }
+    }
+  }, []);
+
+  const triggerGoogleLogin = () => {
+    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+    const redirectUri = window.location.origin + '/register'; // Must be added to Google Cloud Redirect URIs
+    const scope = 'email profile';
+    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=${encodeURIComponent(scope)}`;
+    window.location.href = authUrl;
+  };
 
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -85,6 +126,53 @@ export const Register = () => {
           <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="p-4 bg-green-500/10 text-green-500 font-bold uppercase tracking-widest border border-green-500/20 rounded-lg flex items-center gap-3 text-xs">
             <span className="material-symbols-outlined text-lg animate-scale-pulse">mark_email_read</span>
             {successMsg}
+          </motion.div>
+        )}
+
+        {/* Google Sign-In - Only show on step 1 */}
+        {step === 1 && (
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+            className="space-y-6"
+          >
+            <div className="space-y-4 flex flex-col items-center w-full">
+              {/* Custom styled Google button */}
+              <button
+                type="button"
+                disabled={googleLoading}
+                onClick={triggerGoogleLogin}
+                className="w-full flex items-center justify-center gap-3 bg-white text-gray-800 rounded-full py-4 font-bold text-sm uppercase tracking-widest border border-gray-200 hover:bg-gray-50 hover:border-gray-300 hover:scale-[1.02] active:scale-95 transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:grayscale"
+              >
+                {googleLoading ? (
+                  <span className="flex items-center gap-3">
+                    <svg className="animate-spin h-5 w-5 text-gray-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Creating account...
+                  </span>
+                ) : (
+                  <>
+                    <svg width="20" height="20" viewBox="0 0 48 48">
+                      <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+                      <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+                      <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+                      <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+                    </svg>
+                    Sign up with Google
+                  </>
+                )}
+              </button>
+            </div>
+
+            {/* OR Divider */}
+            <div className="flex items-center gap-4">
+              <div className="flex-1 h-[1px] bg-on-surface/10"></div>
+              <span className="label-sm uppercase tracking-[0.3em] text-outline/50 text-[10px] font-bold">or register with email</span>
+              <div className="flex-1 h-[1px] bg-on-surface/10"></div>
+            </div>
           </motion.div>
         )}
 

@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { motion } from 'motion/react';
-import axios from 'axios';
-import { useAuth } from '../context/AuthContext';
-import { clsx, type ClassValue } from 'clsx';
-import { twMerge } from 'tailwind-merge';
+import React, { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { motion } from "motion/react";
+import axios from "axios";
+import { useAuth } from "../context/AuthContext";
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -15,7 +15,7 @@ function formatTimeAgo(dateString: string) {
   const now = new Date();
   const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
 
-  if (seconds < 60) return 'Just now';
+  if (seconds < 60) return "Just now";
   const minutes = Math.floor(seconds / 60);
   if (minutes < 60) return `${minutes}m ago`;
   const hours = Math.floor(minutes / 60);
@@ -36,13 +36,57 @@ export function getBadge(points: number) {
   return "🌱 New Member";
 }
 
+const heroHighlights = [
+  { label: "Citizens active", value: "12.4K" },
+  { label: "Avg response time", value: "36 hrs" },
+  { label: "Resolution uplift", value: "+41%" },
+];
+
+const systemCards = [
+  {
+    title: "Instant Reporting",
+    description:
+      "Geotagged reports filed in seconds and routed to the right municipal desk.",
+    icon: "rocket_launch",
+    detail: "Live issue intake",
+    cta: "/report",
+  },
+  {
+    title: "Community Power",
+    description:
+      "Collective upvotes surface urgent issues and make local priorities impossible to ignore.",
+    icon: "groups",
+    detail: "Citizen-backed urgency",
+  },
+  {
+    title: "Auto Escalation",
+    description:
+      "Silent workflows escalate unresolved reports to higher oversight at the right time.",
+    icon: "auto_awesome",
+    detail: "Policy-aware automation",
+  },
+  {
+    title: "Verified Results",
+    description:
+      "Progress stays transparent from filing to closure, with proof attached by the community.",
+    icon: "verified",
+    detail: "Outcome accountability",
+  },
+];
+
 export const Landing = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [issues, setIssues] = useState<any[]>([]);
-  const [stats, setStats] = useState({ total: 12458, resolved: 8942, active: 3516 });
-  const [activeCommentIssueId, setActiveCommentIssueId] = useState<string | null>(null);
-  const [commentContent, setCommentContent] = useState('');
+  const [stats, setStats] = useState({
+    total: 12458,
+    resolved: 8942,
+    active: 3516,
+  });
+  const [activeCommentIssueId, setActiveCommentIssueId] = useState<
+    string | null
+  >(null);
+  const [commentContent, setCommentContent] = useState("");
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -50,32 +94,46 @@ export const Landing = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await axios.get('/api/issues?sortBy=upvotesCount&order=desc&page=1&limit=10');
+        const res = await axios.get(
+          "/api/issues?sortBy=upvotesCount&order=desc&page=1&limit=10",
+        );
         if (res.data.success) {
           const fetchedIssues = res.data.data.issues || [];
           setIssues(fetchedIssues);
           setTotalPages(res.data.data.totalPages || 1);
           setStats({
             total: res.data.data.total || 12458,
-            resolved: res.data.data.totalResolved || fetchedIssues.filter((i: any) => i.status === 'RESOLVED').length || 8942,
-            active: res.data.data.totalActive || fetchedIssues.filter((i: any) => i.status !== 'RESOLVED').length || 3516
+            resolved:
+              res.data.data.totalResolved ||
+              fetchedIssues.filter((i: any) => i.status === "RESOLVED")
+                .length ||
+              8942,
+            active:
+              res.data.data.totalActive ||
+              fetchedIssues.filter((i: any) => i.status !== "RESOLVED")
+                .length ||
+              3516,
           });
         }
       } catch (err) {
         console.error("Failed to fetch issues", err);
       }
     };
+
     fetchData();
   }, []);
 
   const loadMore = async () => {
     if (page >= totalPages || loadingMore) return;
+
     try {
       setLoadingMore(true);
       const nextPage = page + 1;
-      const res = await axios.get(`/api/issues?sortBy=upvotesCount&order=desc&page=${nextPage}&limit=10`);
+      const res = await axios.get(
+        `/api/issues?sortBy=upvotesCount&order=desc&page=${nextPage}&limit=10`,
+      );
       if (res.data.success) {
-        setIssues(prev => [...prev, ...(res.data.data.issues || [])]);
+        setIssues((prev) => [...prev, ...(res.data.data.issues || [])]);
         setPage(nextPage);
       }
     } catch (err) {
@@ -88,312 +146,523 @@ export const Landing = () => {
   const handleUpvote = async (e: React.MouseEvent, issueId: string) => {
     e.preventDefault();
     e.stopPropagation();
-    if (!user) return navigate('/login');
+
+    if (!user) return navigate("/login");
+
     try {
       const res = await axios.post(`/api/issues/${issueId}/upvote`);
       const { upvotesCount } = res.data.data;
-      setIssues(prevIssues => prevIssues.map(issue => {
-        if (issue.id === issueId) {
-          return { ...issue, upvotesCount };
-        }
-        return issue;
-      }));
+      setIssues((prevIssues) =>
+        prevIssues.map((issue) =>
+          issue.id === issueId ? { ...issue, upvotesCount } : issue,
+        ),
+      );
     } catch (err) {
-      console.error('Failed to upvote:', err);
+      console.error("Failed to upvote:", err);
     }
   };
 
   const handleCommentSubmit = async (e: React.MouseEvent, issueId: string) => {
     e.preventDefault();
     e.stopPropagation();
-    if (!user) return navigate('/login');
+
+    if (!user) return navigate("/login");
     if (!commentContent.trim()) return;
 
     try {
-      const res = await axios.post(`/api/issues/${issueId}/comments`, { content: commentContent });
-      setIssues(prevIssues => prevIssues.map(issue => {
-        if (issue.id === issueId) {
-          return { 
-            ...issue, 
-            commentCount: (issue.commentCount || 0) + 1,
-            comments: [res.data.data, ...(issue.comments || [])]
-          };
-        }
-        return issue;
-      }));
-      setCommentContent('');
+      const res = await axios.post(`/api/issues/${issueId}/comments`, {
+        content: commentContent,
+      });
+
+      setIssues((prevIssues) =>
+        prevIssues.map((issue) =>
+          issue.id === issueId
+            ? {
+                ...issue,
+                commentCount: (issue.commentCount || 0) + 1,
+                comments: [res.data.data, ...(issue.comments || [])],
+              }
+            : issue,
+        ),
+      );
+      setCommentContent("");
       setActiveCommentIssueId(null);
     } catch (err) {
-      console.error('Failed to post comment:', err);
+      console.error("Failed to post comment:", err);
     }
   };
 
   return (
-    <div className="max-w-[1440px] mx-auto px-6 mb-24 md:mb-0">
-      {/* Hero Section */}
-      <section className="pt-20 pb-12 md:pt-32 md:pb-24 overflow-hidden">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-end">
-          <motion.div 
-            initial={{ opacity: 0, x: -50 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.8 }}
-            className="lg:col-span-10"
+    <div className="relative mx-auto mb-24 max-w-[1440px] px-4 md:mb-0 md:px-6">
+      <section className="relative overflow-hidden px-2 pb-14 pt-10 md:px-0 md:pb-24 md:pt-20">
+        <div className="absolute inset-x-0 top-8 h-[28rem] rounded-[3rem] bg-white/50 blur-3xl" />
+        <div className="relative grid items-center gap-10 lg:grid-cols-[minmax(0,1.25fr)_minmax(320px,0.75fr)]">
+          <motion.div
+            initial={{ opacity: 0, y: 36 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.85, ease: "easeOut" }}
+            className="relative"
           >
-            <h1 className="display-lg text-on-surface">
-              Empowering<br/>Civic Action
-            </h1>
+            <div className="glass-panel rounded-[2rem] p-6 md:p-10">
+              <div className="mb-8 inline-flex items-center gap-3 rounded-full border border-white/60 bg-white/75 px-4 py-2 shadow-[0_12px_30px_rgba(20,20,20,0.06)]">
+                <span className="h-2.5 w-2.5 rounded-full bg-primary animate-soft-pulse" />
+                <span className="text-[10px] font-black uppercase tracking-[0.34em] text-on-surface/60">
+                  Professional civic operating layer
+                </span>
+              </div>
+
+              <h1 className="display-lg max-w-4xl text-on-surface">
+                Floating civic intelligence for faster local action.
+              </h1>
+
+              <p className="mt-6 max-w-2xl text-base leading-8 text-on-surface/72 md:text-lg">
+                CiviLink turns scattered complaints into a visible, prioritized,
+                accountable public workflow. Citizens report, communities
+                amplify, and authorities respond with transparency.
+              </p>
+
+              <div className="mt-10 flex flex-wrap gap-4">
+                <Link
+                  to="/register"
+                  title="Create your CiviLink account"
+                  className="floating-cta rounded-full bg-primary px-8 py-4 text-sm font-black uppercase tracking-[0.28em] text-on-primary shadow-[0_18px_45px_rgba(255,79,0,0.32)] transition-all duration-300 hover:-translate-y-1 hover:brightness-110"
+                >
+                  Get started
+                </Link>
+                <button
+                  onClick={() =>
+                    document
+                      .getElementById("live-activity")
+                      ?.scrollIntoView({ behavior: "smooth" })
+                  }
+                  title="View collective concerns"
+                  className="rounded-full border border-on-surface/10 bg-white/70 px-8 py-4 text-sm font-black uppercase tracking-[0.28em] text-on-surface shadow-[0_16px_40px_rgba(20,20,20,0.06)] backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:bg-white"
+                >
+                  Explore issues
+                </button>
+              </div>
+
+              <div className="mt-10 grid gap-4 sm:grid-cols-3">
+                {heroHighlights.map((item, index) => (
+                  <motion.div
+                    key={item.label}
+                    initial={{ opacity: 0, y: 24 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.12 * index + 0.2, duration: 0.6 }}
+                    className="rounded-[1.75rem] border border-white/60 bg-white/72 p-5 shadow-[0_14px_36px_rgba(20,20,20,0.06)] backdrop-blur-xl"
+                  >
+                    <div className="text-[10px] font-black uppercase tracking-[0.28em] text-on-surface/45">
+                      {item.label}
+                    </div>
+                    <div className="mt-3 text-3xl font-black tracking-[-0.06em] text-on-surface">
+                      {item.value}
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
           </motion.div>
-          <div className="lg:col-span-2 flex justify-end">
-              <motion.div 
-                animate={{ y: [0, 10, 0] }}
-                transition={{ repeat: Infinity, duration: 2 }}
-                onClick={() => document.getElementById('live-activity')?.scrollIntoView({ behavior: 'smooth' })}
-                title="Scroll Down"
-                className="w-16 h-16 border border-primary text-primary rounded-full flex items-center justify-center cursor-pointer hover:bg-primary/10 transition-colors"
-              >
-                <span className="material-symbols-outlined text-3xl">arrow_downward</span>
-              </motion.div>
-          </div>
-        </div>
 
-        <div className="mt-16 grid grid-cols-1 md:grid-cols-12 gap-8">
-          <div className="md:col-span-5">
-            <p className="font-body italic text-xl md:text-2xl leading-relaxed text-on-surface">
-              "A decentralized platform for citizens to report issues, hold authorities accountable, and build better communities together."
-            </p>
-          </div>
-          <div className="md:col-span-7 flex flex-wrap gap-4 items-start md:justify-end">
-            <Link to="/register" title="Create your Civilink account" className="rounded-full bg-primary text-on-primary px-10 py-5 font-bold uppercase tracking-widest hover:brightness-110 hover:scale-105 transition-all duration-200">
-              Get Started
-            </Link>
-            <button 
-              onClick={() => document.getElementById('live-activity')?.scrollIntoView({ behavior: 'smooth' })}
-              title="View collective concerns"
-              className="rounded-full border-2 border-on-surface text-on-surface px-10 py-5 font-bold uppercase tracking-widest hover:bg-on-surface hover:text-surface transition-all duration-200"
-            >
-              Explore Issues
-            </button>
-          </div>
-        </div>
-      </section>
-
-      {/* Stats Bar */}
-      <section className="py-12 border-y border-on-surface">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
-          <div className="flex flex-col gap-2">
-            <span className="label-sm text-outline">Total Reports</span>
-            <span className="text-5xl md:text-7xl font-bold tracking-tighter">{stats.total.toLocaleString()}</span>
-          </div>
-          <div className="flex flex-col gap-2 border-on-surface/20 md:border-l md:pl-12">
-            <span className="label-sm text-outline">Resolved</span>
-            <span className="text-5xl md:text-7xl font-bold tracking-tighter text-primary">{stats.resolved.toLocaleString()}</span>
-          </div>
-          <div className="flex flex-col gap-2 border-on-surface/20 md:border-l md:pl-12">
-            <span className="label-sm text-outline">Community Points</span>
-            <span className="text-5xl md:text-7xl font-bold tracking-tighter">12.4K</span>
-          </div>
-        </div>
-      </section>
-
-      {/* Features Grid */}
-      <section className="py-24">
-        <div className="flex justify-between items-baseline mb-16">
-          <h2 className="text-4xl font-bold uppercase tracking-tighter">Our Core Systems</h2>
-          <span className="label-sm text-outline">01 // MISSION</span>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-px bg-on-surface border border-on-surface">
-          {/* Asset 1: Instant Reporting */}
-          <Link 
-            to="/report"
-            title="Read more about Instant Reporting"
-            className="bg-surface p-10 group hover:bg-primary/5 transition-colors duration-300 flex flex-col items-center text-center no-underline relative overflow-hidden"
+          <motion.div
+            initial={{ opacity: 0, x: 32 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.9, ease: "easeOut", delay: 0.15 }}
+            className="relative"
           >
-            <div className="relative w-32 h-32 flex items-center justify-center mb-8">
-                <div className="absolute inset-0 border-2 border-primary rounded-full animate-pulse-ring"></div>
-                <div className="absolute inset-0 border-2 border-primary rounded-full animate-pulse-ring" style={{ animationDelay: '0.5s' }}></div>
-                <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center text-white shadow-xl shadow-primary/30 relative overflow-hidden animate-float">
-                    <span className="material-symbols-outlined text-4xl">rocket_launch</span>
-                    <div className="absolute top-0 h-full w-full bg-gradient-to-r from-transparent via-white/30 to-transparent -skew-x-12 animate-shine"></div>
-                </div>
-            </div>
-            <h3 className="text-xl font-bold uppercase tracking-wide mb-4 group-hover:text-primary transition-colors">Instant Reporting</h3>
-            <p className="text-sm opacity-70 leading-relaxed">Geotagged reports filed in seconds directly to relevant municipal departments.</p>
-          </Link>
+            <div className="glass-panel relative overflow-hidden rounded-[2.25rem] p-6 md:p-8">
+              <div className="absolute right-6 top-6 rounded-full border border-primary/15 bg-primary/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.3em] text-primary">
+                Live network
+              </div>
 
-          {/* Asset 2: Community Power */}
-          <div 
-            onClick={() => document.getElementById('live-activity')?.scrollIntoView({ behavior: 'smooth' })}
-            title="Upvote and prioritize community issues"
-            className="bg-surface p-10 group hover:bg-primary/5 transition-colors duration-300 flex flex-col items-center text-center no-underline relative overflow-hidden cursor-pointer"
-          >
-            <div className="relative w-32 h-32 flex items-center justify-center mb-8 animate-scale-pulse">
-                <div className="absolute -top-2 -left-2 w-12 h-12 bg-primary/10 rounded-full blur-xl"></div>
-                <div className="w-20 h-20 bg-surface border-2 border-primary rounded-full flex items-center justify-center text-primary shadow-lg">
-                    <span className="material-symbols-outlined text-4xl">groups</span>
-                </div>
-                <div className="absolute -bottom-1 -right-1 w-8 h-8 bg-primary rounded-full flex items-center justify-center text-white border-2 border-surface shadow-md">
-                    <span className="material-symbols-outlined text-sm">electric_bolt</span>
-                </div>
-            </div>
-            <h3 className="text-xl font-bold uppercase tracking-wide mb-4 group-hover:text-primary transition-colors">Community Power</h3>
-            <p className="text-sm opacity-70 leading-relaxed">Upvote local concerns to prioritize community needs in the legislative pipeline.</p>
-          </div>
-
-          {/* Asset 3: Auto Escalation */}
-          <div 
-            title="System-wide triggers ensure unresponsive reports reach higher oversight automatically."
-            className="bg-surface p-10 group hover:bg-primary/5 transition-colors duration-300 flex flex-col items-center text-center relative overflow-hidden cursor-default"
-          >
-            <div className="relative w-32 h-32 flex items-center justify-center mb-8">
-                <div className="absolute bottom-4 flex items-end gap-2 h-16">
-                    <div className="w-2 bg-primary/20 rounded-full bar-1"></div>
-                    <div className="w-2 bg-primary/40 rounded-full bar-2"></div>
-                    <div className="w-2 bg-primary/60 rounded-full bar-3"></div>
-                    <div className="w-2 bg-primary rounded-full bar-4"></div>
-                </div>
-                <div className="w-16 h-16 bg-surface border-2 border-on-surface/10 rounded-2xl flex items-center justify-center text-primary shadow-xl relative z-10 transition-transform group-hover:rotate-12 group-hover:scale-110 duration-300">
-                    <span className="material-symbols-outlined text-4xl">auto_awesome</span>
-                </div>
-            </div>
-            <h3 className="text-xl font-bold uppercase tracking-wide mb-4 group-hover:text-primary transition-colors">Auto Escalation</h3>
-            <p className="text-sm opacity-70 leading-relaxed">System-wide triggers ensure unresponsive reports reach higher oversight automatically.</p>
-          </div>
-
-          {/* Asset 4: Verified Results */}
-          <div 
-            title="Transparent tracking from initial report to final resolution, verified by the community."
-            className="bg-surface p-10 group hover:bg-primary/5 transition-colors duration-300 flex flex-col items-center text-center relative overflow-hidden cursor-default"
-          >
-            <div className="relative w-32 h-32 flex items-center justify-center mb-8">
-                <div className="absolute inset-0 border border-dashed border-primary/40 rounded-full animate-rotate-slow"></div>
-                <div className="w-20 h-20 bg-surface border-2 border-primary rounded-[24px] flex items-center justify-center text-primary shadow-xl relative z-10">
-                    <span className="material-symbols-outlined text-4xl">verified</span>
-                </div>
-                <div className="absolute -top-2 -right-2 w-10 h-10 bg-[#10B981] rounded-full flex items-center justify-center text-white border-4 border-surface shadow-lg z-20">
-                    <span className="material-symbols-outlined text-xl">check</span>
-                </div>
-            </div>
-            <h3 className="text-xl font-bold uppercase tracking-wide mb-4 group-hover:text-primary transition-colors">Verified Results</h3>
-            <p className="text-sm opacity-70 leading-relaxed">Transparent tracking from initial report to final resolution, verified by the community.</p>
-          </div>
-        </div>
-      </section>
-
-      {/* Recent Activity Feed */}
-      <section id="live-activity" className="pb-32 max-w-4xl mx-auto mt-24">
-        <div className="flex justify-between items-baseline mb-12">
-          <h2 className="text-4xl font-bold uppercase tracking-tighter">Community Priority</h2>
-          <span className="label-sm text-outline">02 // FEED</span>
-        </div>
-        
-        <div className="flex flex-col gap-6">
-          {issues.map((issue) => (
-            <div
-              key={issue.id}
-              onClick={() => navigate(`/issues/${issue.id}`)}
-              className="group p-8 bg-surface border-2 border-on-surface hover:bg-primary/5 rounded-xl transition-all duration-300 block cursor-pointer shadow-[4px_4px_0px_#000] hover:-translate-y-1 hover:shadow-[6px_6px_0px_#000]"
-            >
-              <div className="flex justify-between items-start mb-6">
+              <div className="relative flex min-h-[420px] flex-col justify-between">
                 <div>
-                  <span className="label-sm font-bold opacity-60 block mb-2">{issue.category}</span>
-                  <h3 className="text-2xl font-black uppercase tracking-tight leading-none group-hover:text-primary transition-colors">{issue.title}</h3>
+                  <p className="label-sm text-outline">System overview</p>
+                  <h2 className="mt-4 text-3xl font-black uppercase tracking-[-0.05em] text-on-surface md:text-4xl">
+                    Reports move like signals, not paperwork.
+                  </h2>
+                  <p className="mt-4 max-w-md text-sm leading-7 text-on-surface/65">
+                    A calm interface, ambient motion, and real-time issue flows
+                    make civic participation feel trustworthy and modern.
+                  </p>
                 </div>
-                <div className={cn(
-                  "px-4 py-1 rounded-full label-sm border-2 font-black shadow-[2px_2px_0px_#000]",
-                  issue.status === 'OPEN' ? "text-primary border-primary bg-primary/10" :
-                    issue.status === 'IN_PROGRESS' ? "text-secondary border-secondary bg-secondary/10" : "text-on-surface border-on-surface bg-surface-tint/10"
-                )}>
-                  • {issue.status}
+
+                <div className="relative mt-10 grid gap-4">
+                  <motion.div
+                    animate={{ y: [0, -12, 0] }}
+                    transition={{
+                      duration: 6,
+                      repeat: Infinity,
+                      ease: "easeInOut",
+                    }}
+                    className="rounded-[1.8rem] border border-white/60 bg-white/78 p-5 shadow-[0_18px_45px_rgba(20,20,20,0.08)]"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-[10px] font-black uppercase tracking-[0.28em] text-on-surface/45">
+                          Active reports
+                        </p>
+                        <h3 className="mt-2 text-4xl font-black tracking-[-0.06em] text-on-surface">
+                          {stats.active.toLocaleString()}
+                        </h3>
+                      </div>
+                      <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary text-on-primary shadow-[0_16px_36px_rgba(255,79,0,0.24)]">
+                        <span className="material-symbols-outlined">
+                          orbital
+                        </span>
+                      </div>
+                    </div>
+                  </motion.div>
+
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <motion.div
+                      animate={{ y: [0, 10, 0] }}
+                      transition={{
+                        duration: 7,
+                        repeat: Infinity,
+                        ease: "easeInOut",
+                        delay: 0.4,
+                      }}
+                      className="rounded-[1.6rem] border border-white/60 bg-white/76 p-5 shadow-[0_18px_45px_rgba(20,20,20,0.08)]"
+                    >
+                      <p className="text-[10px] font-black uppercase tracking-[0.28em] text-on-surface/45">
+                        Resolved
+                      </p>
+                      <p className="mt-2 text-3xl font-black tracking-[-0.05em] text-primary">
+                        {stats.resolved.toLocaleString()}
+                      </p>
+                    </motion.div>
+
+                    <motion.div
+                      animate={{ y: [0, -10, 0] }}
+                      transition={{
+                        duration: 7,
+                        repeat: Infinity,
+                        ease: "easeInOut",
+                        delay: 0.9,
+                      }}
+                      className="rounded-[1.6rem] border border-white/60 bg-white/76 p-5 shadow-[0_18px_45px_rgba(20,20,20,0.08)]"
+                    >
+                      <p className="text-[10px] font-black uppercase tracking-[0.28em] text-on-surface/45">
+                        Total tracked
+                      </p>
+                      <p className="mt-2 text-3xl font-black tracking-[-0.05em] text-on-surface">
+                        {stats.total.toLocaleString()}
+                      </p>
+                    </motion.div>
+                  </div>
+
+                  <div className="rounded-[1.8rem] border border-dashed border-primary/25 bg-primary/6 p-5">
+                    <div className="flex items-center justify-between gap-4">
+                      <div>
+                        <p className="text-[10px] font-black uppercase tracking-[0.28em] text-primary/70">
+                          Trusted momentum
+                        </p>
+                        <p className="mt-2 text-sm leading-7 text-on-surface/70">
+                          A professional visual system communicates confidence
+                          while the data pipeline keeps everything actionable.
+                        </p>
+                      </div>
+                      <button
+                        onClick={() =>
+                          document
+                            .getElementById("live-activity")
+                            ?.scrollIntoView({ behavior: "smooth" })
+                        }
+                        className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-primary/20 bg-white text-primary transition-transform hover:scale-105"
+                        title="Scroll to issues"
+                      >
+                        <span className="material-symbols-outlined">south</span>
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
-              <p className="font-body italic opacity-80 line-clamp-3 mb-6 text-lg group-hover:text-on-surface transition-colors">
-                "{issue.description}"
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      <section className="relative py-10 md:py-14">
+        <div className="glass-panel grid gap-5 rounded-[2rem] p-6 md:grid-cols-3 md:gap-10 md:p-8">
+          <div>
+            <span className="label-sm text-outline">Public signal</span>
+            <p className="mt-3 text-4xl font-black tracking-[-0.06em] md:text-6xl">
+              {stats.total.toLocaleString()}
+            </p>
+            <p className="mt-3 text-sm leading-7 text-on-surface/65">
+              verified reports flowing through a single civic resolution layer.
+            </p>
+          </div>
+          <div className="border-white/60 md:border-l md:pl-10">
+            <span className="label-sm text-outline">Resolved issues</span>
+            <p className="mt-3 text-4xl font-black tracking-[-0.06em] text-primary md:text-6xl">
+              {stats.resolved.toLocaleString()}
+            </p>
+            <p className="mt-3 text-sm leading-7 text-on-surface/65">
+              outcomes delivered with public visibility and follow-through.
+            </p>
+          </div>
+          <div className="border-white/60 md:border-l md:pl-10">
+            <span className="label-sm text-outline">Community points</span>
+            <p className="mt-3 text-4xl font-black tracking-[-0.06em] md:text-6xl">
+              12.4K
+            </p>
+            <p className="mt-3 text-sm leading-7 text-on-surface/65">
+              earned by advocates who report, comment, and improve local
+              response.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section className="py-16 md:py-24">
+        <div className="mb-10 flex flex-col gap-3 md:mb-16 md:flex-row md:items-end md:justify-between">
+          <div>
+            <span className="label-sm text-outline">01 // MISSION</span>
+            <h2 className="mt-4 text-4xl font-black uppercase tracking-[-0.06em] md:text-5xl">
+              Core systems for modern civic response
+            </h2>
+          </div>
+          <p className="max-w-xl text-sm leading-7 text-on-surface/65">
+            Every module is designed to feel calm, premium, and trustworthy
+            while quietly guiding users toward action.
+          </p>
+        </div>
+
+        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+          {systemCards.map((card, index) => {
+            const cardContent = (
+              <>
+                <div className="mb-10 flex items-center justify-between">
+                  <div className="floating-icon flex h-16 w-16 items-center justify-center rounded-[1.5rem] bg-white text-primary shadow-[0_18px_40px_rgba(20,20,20,0.08)]">
+                    <span className="material-symbols-outlined text-3xl">
+                      {card.icon}
+                    </span>
+                  </div>
+                  <span className="rounded-full bg-primary/8 px-3 py-1 text-[10px] font-black uppercase tracking-[0.28em] text-primary">
+                    {card.detail}
+                  </span>
+                </div>
+
+                <h3 className="text-2xl font-black uppercase tracking-[-0.04em] text-on-surface transition-colors group-hover:text-primary">
+                  {card.title}
+                </h3>
+                <p className="mt-4 text-sm leading-7 text-on-surface/68">
+                  {card.description}
+                </p>
+
+                <div className="mt-auto pt-8">
+                  <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.28em] text-on-surface/45">
+                    <span className="h-2 w-2 rounded-full bg-primary/70" />
+                    Trusted civic flow
+                  </div>
+                </div>
+              </>
+            );
+
+            return (
+              <motion.div
+                key={card.title}
+                initial={{ opacity: 0, y: 24 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.4 }}
+                transition={{ duration: 0.55, delay: index * 0.08 }}
+              >
+                {card.cta ? (
+                  <Link
+                    to={card.cta}
+                    title={card.title}
+                    className="group glass-panel flex h-full flex-col rounded-[2rem] p-6 transition-all duration-300 hover:-translate-y-2 hover:border-primary/20"
+                  >
+                    {cardContent}
+                  </Link>
+                ) : (
+                  <div
+                    title={card.title}
+                    className="group glass-panel flex h-full flex-col rounded-[2rem] p-6 transition-all duration-300 hover:-translate-y-2 hover:border-primary/20"
+                  >
+                    {cardContent}
+                  </div>
+                )}
+              </motion.div>
+            );
+          })}
+        </div>
+      </section>
+
+      <section id="live-activity" className="pb-24 pt-6 md:pb-32">
+        <div className="mb-10 flex flex-col gap-3 md:mb-12 md:flex-row md:items-end md:justify-between">
+          <div>
+            <span className="label-sm text-outline">02 // FEED</span>
+            <h2 className="mt-4 text-4xl font-black uppercase tracking-[-0.06em] md:text-5xl">
+              Community priority feed
+            </h2>
+          </div>
+          <p className="max-w-xl text-sm leading-7 text-on-surface/65">
+            High-signal reports rise to the top with community urgency, fast
+            interaction loops, and space for constructive replies.
+          </p>
+        </div>
+
+        <div className="mx-auto flex max-w-5xl flex-col gap-6">
+          {issues.map((issue, index) => (
+            <motion.div
+              key={issue.id}
+              initial={{ opacity: 0, y: 26 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.18 }}
+              transition={{ duration: 0.45, delay: index * 0.03 }}
+              onClick={() => navigate(`/issues/${issue.id}`)}
+              className="issue-card group cursor-pointer rounded-[2rem] p-6 md:p-8"
+            >
+              <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                <div>
+                  <span className="text-[10px] font-black uppercase tracking-[0.28em] text-on-surface/45">
+                    {issue.category}
+                  </span>
+                  <h3 className="mt-3 text-2xl font-black uppercase leading-tight tracking-[-0.05em] text-on-surface transition-colors group-hover:text-primary md:text-3xl">
+                    {issue.title}
+                  </h3>
+                </div>
+                <div
+                  className={cn(
+                    "inline-flex items-center gap-2 rounded-full border px-4 py-2 text-[10px] font-black uppercase tracking-[0.24em]",
+                    issue.status === "OPEN"
+                      ? "border-primary/20 bg-primary/10 text-primary"
+                      : issue.status === "IN_PROGRESS"
+                        ? "border-amber-400/20 bg-amber-400/10 text-amber-700"
+                        : "border-emerald-500/20 bg-emerald-500/10 text-emerald-700",
+                  )}
+                >
+                  <span className="h-2 w-2 rounded-full bg-current" />
+                  {issue.status.replace("_", " ")}
+                </div>
+              </div>
+
+              <p className="max-w-3xl text-base italic leading-8 text-on-surface/72">
+                “{issue.description}”
               </p>
-              
-              <div className="flex flex-col sm:flex-row sm:justify-between items-start sm:items-center gap-4 pt-6 mt-2 border-t font-black border-on-surface/10 group-hover:border-on-surface/30">
-                <div className="flex items-center gap-4 label-sm transition-opacity">
-                  <span 
+
+              <div className="mt-8 flex flex-col gap-4 border-t border-white/55 pt-6 md:flex-row md:items-center md:justify-between">
+                <div className="flex flex-wrap items-center gap-3">
+                  <span
                     onClick={(e) => handleUpvote(e, issue.id)}
                     title="Upvote this issue"
-                    className="flex items-center gap-2 cursor-pointer hover:bg-primary hover:text-on-primary hover:border-primary border-2 border-on-surface/20 transition-all active:scale-95 bg-surface px-4 py-2 rounded-full shadow-[2px_2px_0px_#000]"
+                    className="inline-flex items-center gap-2 rounded-full border border-white/70 bg-white/82 px-4 py-2 text-xs font-black uppercase tracking-[0.16em] shadow-[0_12px_30px_rgba(20,20,20,0.07)] transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/30 hover:bg-primary hover:text-on-primary"
                   >
-                    <span className="material-symbols-outlined text-[18px] font-black">arrow_upward</span>
+                    <span className="material-symbols-outlined text-[18px]">
+                      arrow_upward
+                    </span>
                     {issue.upvotesCount || 0}
                   </span>
-                  <span 
+
+                  <span
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
-                      if (!user) { navigate('/login'); return; }
-                      setActiveCommentIssueId(activeCommentIssueId === issue.id ? null : issue.id);
+                      if (!user) {
+                        navigate("/login");
+                        return;
+                      }
+                      setActiveCommentIssueId(
+                        activeCommentIssueId === issue.id ? null : issue.id,
+                      );
                     }}
                     title="Toggle Comments"
-                    className="flex items-center gap-2 cursor-pointer hover:bg-secondary hover:text-surface hover:border-secondary border-2 border-on-surface/20 transition-all active:scale-95 bg-surface px-4 py-2 rounded-full shadow-[2px_2px_0px_#000]"
+                    className="inline-flex items-center gap-2 rounded-full border border-white/70 bg-white/82 px-4 py-2 text-xs font-black uppercase tracking-[0.16em] shadow-[0_12px_30px_rgba(20,20,20,0.07)] transition-all duration-300 hover:-translate-y-0.5 hover:border-on-surface/15 hover:bg-on-surface hover:text-surface"
                   >
-                    <span className="material-symbols-outlined text-[18px] font-black">chat_bubble</span>
+                    <span className="material-symbols-outlined text-[18px]">
+                      chat_bubble
+                    </span>
                     {issue.commentCount || 0}
                   </span>
                 </div>
-                <div className="flex items-center gap-2 opacity-50">
-                  <span className="material-symbols-outlined text-sm">location_on</span>
-                  <span className="text-sm tracking-widest uppercase">{issue.address?.split(',')[0]}</span>
+
+                <div className="flex items-center gap-2 text-xs uppercase tracking-[0.24em] text-on-surface/45">
+                  <span className="material-symbols-outlined text-base">
+                    location_on
+                  </span>
+                  <span>{issue.address?.split(",")[0]}</span>
                 </div>
               </div>
 
               {activeCommentIssueId === issue.id && (
-                <div 
-                  className="mt-6 pt-6 border-t-2 border-dashed border-on-surface/10 flex flex-col gap-6"
-                  onClick={e => { e.preventDefault(); e.stopPropagation(); }}
+                <div
+                  className="mt-6 flex flex-col gap-6 border-t border-dashed border-on-surface/10 pt-6"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }}
                 >
-                  {/* Inline Comments List */}
-                  <div className="flex flex-col gap-4 max-h-64 overflow-y-auto pr-2">
+                  <div className="hide-scrollbar flex max-h-64 flex-col gap-4 overflow-y-auto pr-1">
                     {issue.comments?.map((comment: any) => (
-                      <div key={comment.id} className="flex gap-3">
-                        <div className="w-8 h-8 rounded-full border border-on-surface/20 flex items-center justify-center shrink-0 overflow-hidden bg-surface shadow-[1px_1px_0px_#000]">
-                           {comment.user?.avatarUrl ? (
-                             <img src={comment.user.avatarUrl} alt={comment.user.name} className="w-full h-full object-cover" />
-                           ) : (
-                             <span className="material-symbols-outlined text-sm font-black opacity-80">person</span>
-                           )}
+                      <div
+                        key={comment.id}
+                        className="flex gap-3 rounded-[1.5rem] border border-white/60 bg-white/65 p-3 shadow-[0_12px_30px_rgba(20,20,20,0.05)]"
+                      >
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-white/70 bg-surface shadow-[0_8px_20px_rgba(20,20,20,0.05)]">
+                          {comment.user?.avatarUrl ? (
+                            <img
+                              src={comment.user.avatarUrl}
+                              alt={comment.user.name}
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            <span className="material-symbols-outlined text-sm text-on-surface/65">
+                              person
+                            </span>
+                          )}
                         </div>
-                        <div className="flex flex-col flex-1 bg-on-surface/5 p-3 rounded-lg border border-transparent hover:border-on-surface/20 transition-colors">
-                          <div className="flex items-baseline gap-2 mb-1 flex-wrap">
-                            <span className="font-black text-xs tracking-tight uppercase">{comment.user?.name || 'Anonymous'}</span>
-                            {comment.user?.role === 'AUTHORITY' && (
-                              <span className="flex items-center gap-1 text-[10px] font-black text-[#10B981] bg-[#10B981]/10 px-2 py-0.5 rounded-full uppercase tracking-wider border border-[#10B981]/20">
-                                <span className="material-symbols-outlined text-[10px]">verified_user</span> Official Reply
+                        <div className="min-w-0 flex-1">
+                          <div className="mb-2 flex flex-wrap items-center gap-2">
+                            <span className="text-[11px] font-black uppercase tracking-[0.16em] text-on-surface">
+                              {comment.user?.name || "Anonymous"}
+                            </span>
+                            {comment.user?.role === "AUTHORITY" && (
+                              <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-emerald-700">
+                                <span className="material-symbols-outlined text-[11px]">
+                                  verified_user
+                                </span>
+                                Official reply
                               </span>
                             )}
-                            <span className="text-[10px] font-bold text-secondary tracking-wider uppercase bg-secondary/10 px-2 py-0.5 rounded-full">{getBadge(comment.user?.points || 0)}</span>
-                            <span className="text-[10px] font-bold text-on-surface/50 tracking-wider uppercase ml-1">{formatTimeAgo(comment.createdAt)}</span>
+                            <span className="rounded-full bg-primary/8 px-2 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-primary">
+                              {getBadge(comment.user?.points || 0)}
+                            </span>
+                            <span className="text-[10px] font-black uppercase tracking-[0.18em] text-on-surface/40">
+                              {formatTimeAgo(comment.createdAt)}
+                            </span>
                           </div>
-                          <p className="font-body text-sm leading-relaxed whitespace-pre-wrap">{comment.content}</p>
+                          <p className="text-sm leading-7 text-on-surface/72 whitespace-pre-wrap">
+                            {comment.content}
+                          </p>
                         </div>
                       </div>
                     ))}
+
                     {(!issue.comments || issue.comments.length === 0) && (
-                      <div className="text-center py-4 text-on-surface/50 font-body italic text-sm">
-                        No comments yet. Start the conversation!
+                      <div className="rounded-[1.5rem] border border-dashed border-on-surface/10 bg-white/45 py-6 text-center text-sm italic text-on-surface/45">
+                        No comments yet. Start the conversation.
                       </div>
                     )}
                   </div>
 
-                  {/* Comment Input */}
-                  <div className="flex flex-col sm:flex-row gap-4 border-t border-on-surface/10 pt-4">
-                    <input 
-                      type="text" 
+                  <div className="flex flex-col gap-4 border-t border-white/55 pt-4 sm:flex-row">
+                    <input
+                      type="text"
                       value={commentContent}
-                      onChange={e => setCommentContent(e.target.value)}
+                      onChange={(e) => setCommentContent(e.target.value)}
                       placeholder="Write your thoughts..."
-                      className="flex-1 bg-surface border-2 border-on-surface rounded-full px-6 py-3 font-bold text-sm focus:outline-none focus:shadow-[4px_4px_0px_#000] focus:-translate-y-1 transition-all shadow-[2px_2px_0px_transparent]"
+                      className="flex-1 rounded-full border border-white/70 bg-white/80 px-6 py-3 text-sm font-medium text-on-surface shadow-[0_12px_30px_rgba(20,20,20,0.05)] outline-none transition-all focus:-translate-y-0.5 focus:border-primary/30 focus:shadow-[0_18px_36px_rgba(20,20,20,0.08)]"
                       onKeyDown={(e) => {
-                        if (e.key === 'Enter') handleCommentSubmit(e as any, issue.id);
+                        if (e.key === "Enter")
+                          handleCommentSubmit(e as any, issue.id);
                       }}
                     />
-                    <button 
+                    <button
                       onClick={(e) => handleCommentSubmit(e, issue.id)}
                       title="Post your comment"
-                      className="bg-primary text-on-primary border-2 border-on-surface shadow-[4px_4px_0px_#000] px-8 py-3 rounded-full font-black uppercase tracking-widest text-sm hover:-translate-y-1 hover:shadow-[6px_6px_0px_#000] active:translate-y-0 active:shadow-none transition-all shrink-0 disabled:opacity-50"
+                      className="floating-cta rounded-full bg-primary px-8 py-3 text-sm font-black uppercase tracking-[0.28em] text-on-primary shadow-[0_18px_45px_rgba(255,79,0,0.32)] transition-all duration-300 hover:-translate-y-1 disabled:cursor-not-allowed disabled:opacity-50"
                       disabled={!commentContent.trim()}
                     >
                       Post
@@ -401,26 +670,29 @@ export const Landing = () => {
                   </div>
                 </div>
               )}
-
-            </div>
+            </motion.div>
           ))}
         </div>
 
         {page < totalPages && (
-          <div className="mt-16 flex justify-center">
+          <div className="mt-14 flex justify-center">
             <button
               onClick={loadMore}
               disabled={loadingMore}
-              className="group relative px-12 py-6 bg-surface border-2 border-on-surface rounded-full overflow-hidden transition-all hover:-translate-y-1 hover:shadow-[8px_8px_0px_#000] active:translate-y-0 active:shadow-none"
+              className="floating-cta rounded-full border border-white/60 bg-white/85 px-10 py-4 shadow-[0_16px_40px_rgba(20,20,20,0.08)] transition-all duration-300 hover:-translate-y-1 disabled:cursor-not-allowed disabled:opacity-60"
             >
               <div className="relative z-10 flex items-center gap-3">
                 {loadingMore ? (
-                  <span className="material-symbols-outlined animate-spin">progress_activity</span>
+                  <span className="material-symbols-outlined animate-spin text-primary">
+                    progress_activity
+                  </span>
                 ) : (
-                  <span className="material-symbols-outlined group-hover:rotate-180 transition-transform duration-500">expand_more</span>
+                  <span className="material-symbols-outlined transition-transform duration-500 group-hover:rotate-180">
+                    expand_more
+                  </span>
                 )}
-                <span className="font-black uppercase tracking-widest text-sm">
-                  {loadingMore ? 'Syncing...' : 'Load Archived Concerns'}
+                <span className="text-sm font-black uppercase tracking-[0.28em] text-on-surface">
+                  {loadingMore ? "Syncing..." : "Load archived concerns"}
                 </span>
               </div>
             </button>
@@ -428,36 +700,96 @@ export const Landing = () => {
         )}
       </section>
 
-      {/* Newsletter / Bento Hero End */}
-      <section className="mb-32">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 h-full">
-          <div className="bg-on-surface text-surface p-12 rounded-xl flex flex-col justify-between min-h-[400px]">
-            <h2 className="text-5xl font-bold uppercase tracking-tighter leading-none">Ready to lead<br/>your community?</h2>
-            <div className="flex flex-col gap-6">
-              <p className="font-body italic text-xl opacity-80">Join 12k+ advocates making real change happen.</p>
-              <div className="relative border-b border-surface/30 focus-within:border-primary transition-colors pb-2">
-                <input className="w-full bg-transparent border-none outline-none py-2 text-xs tracking-widest uppercase placeholder:text-surface/40" placeholder="ENTER YOUR EMAIL" type="email"/>
-                <button className="absolute right-0 top-1/2 -translate-y-1/2 material-symbols-outlined text-primary hover:scale-110 transition-transform">trending_flat</button>
+      <section className="pb-32">
+        <div className="grid gap-6 md:grid-cols-[minmax(0,1.05fr)_minmax(280px,0.95fr)]">
+          <div className="glass-panel flex min-h-[360px] flex-col justify-between rounded-[2rem] p-8 md:p-10">
+            <div>
+              <span className="label-sm text-outline">03 // NEXT</span>
+              <h2 className="mt-4 text-4xl font-black uppercase tracking-[-0.06em] md:text-5xl">
+                Ready to lead your community?
+              </h2>
+              <p className="mt-6 max-w-xl text-sm leading-8 text-on-surface/68">
+                Join advocates, residents, and local leaders turning civic
+                friction into clear, visible progress.
+              </p>
+            </div>
+
+            <div className="mt-10 flex flex-col gap-6">
+              <div className="rounded-[1.5rem] border border-white/60 bg-white/75 p-4 shadow-[0_14px_36px_rgba(20,20,20,0.05)]">
+                <div className="flex items-center gap-3">
+                  <span className="material-symbols-outlined text-primary">
+                    mail
+                  </span>
+                  <input
+                    className="w-full bg-transparent text-sm font-medium uppercase tracking-[0.2em] text-on-surface outline-none placeholder:text-on-surface/30"
+                    placeholder="ENTER YOUR EMAIL"
+                    type="email"
+                  />
+                  <button className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-on-primary transition-transform hover:scale-105">
+                    <span className="material-symbols-outlined">
+                      trending_flat
+                    </span>
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-3">
+                <Link
+                  to={user ? "/report" : "/register"}
+                  className="floating-cta rounded-full bg-on-surface px-7 py-3 text-sm font-black uppercase tracking-[0.26em] text-surface transition-all duration-300 hover:-translate-y-1"
+                >
+                  {user ? "Report an issue" : "Create account"}
+                </Link>
+                <Link
+                  to="/login"
+                  className="rounded-full border border-on-surface/10 bg-white/70 px-7 py-3 text-sm font-black uppercase tracking-[0.26em] text-on-surface transition-all duration-300 hover:-translate-y-1 hover:border-primary/30"
+                >
+                  Member login
+                </Link>
               </div>
             </div>
           </div>
-          <div className="grid grid-rows-2 gap-8">
-            <div className="bg-surface-container p-8 rounded-xl border border-on-surface/10 flex items-center justify-between">
+
+          <div className="grid gap-6">
+            <div className="glass-panel flex items-center justify-between rounded-[2rem] p-6">
               <div>
-                <span className="label-sm text-outline block mb-2">SYSTEM STATUS</span>
-                <div className="text-2xl font-bold uppercase tracking-tight">Network Active</div>
+                <span className="label-sm text-outline">System status</span>
+                <div className="mt-3 text-2xl font-black uppercase tracking-[-0.04em]">
+                  Network active
+                </div>
               </div>
-              <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center text-white shadow-lg shadow-primary/20">
+              <div className="floating-icon flex h-14 w-14 items-center justify-center rounded-full bg-primary text-on-primary shadow-[0_18px_40px_rgba(255,79,0,0.24)]">
                 <span className="material-symbols-outlined">sensors</span>
               </div>
             </div>
-            <div className="bg-surface-container-high p-8 rounded-xl border border-on-surface/10 flex items-center justify-between">
+
+            <div className="glass-panel flex items-center justify-between rounded-[2rem] p-6">
               <div>
-                <span className="label-sm text-outline block mb-2">PARTNERS</span>
-                <div className="text-2xl font-bold uppercase tracking-tight">42 Municipalities</div>
+                <span className="label-sm text-outline">Partners</span>
+                <div className="mt-3 text-2xl font-black uppercase tracking-[-0.04em]">
+                  42 Municipalities
+                </div>
               </div>
-              <div className="w-12 h-12 border-2 border-primary rounded-full flex items-center justify-center text-primary">
-                <span className="material-symbols-outlined">account_balance</span>
+              <div className="floating-icon flex h-14 w-14 items-center justify-center rounded-full border border-primary/20 bg-white text-primary shadow-[0_18px_40px_rgba(20,20,20,0.06)]">
+                <span className="material-symbols-outlined">
+                  account_balance
+                </span>
+              </div>
+            </div>
+
+            <div className="glass-panel rounded-[2rem] p-6">
+              <span className="label-sm text-outline">Trusted by</span>
+              <div className="mt-5 grid grid-cols-2 gap-3">
+                {["Residents", "Volunteers", "Ward teams", "Officials"].map(
+                  (item) => (
+                    <div
+                      key={item}
+                      className="rounded-[1.25rem] border border-white/60 bg-white/70 px-4 py-4 text-center text-xs font-black uppercase tracking-[0.2em] text-on-surface/60"
+                    >
+                      {item}
+                    </div>
+                  ),
+                )}
               </div>
             </div>
           </div>

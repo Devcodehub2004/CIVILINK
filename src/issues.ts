@@ -6,11 +6,11 @@ import {
   sendSuccess,
   sendError,
   authenticate,
-  authorize,
   cloudinary,
   upload,
   awardPoints,
-  createNotification
+  createNotification,
+  AuthRequest,
 } from "./lib";
 
 const router = Router();
@@ -20,17 +20,36 @@ export const issueSchema = z.object({
   title: z.string().min(5),
   description: z.string().min(10),
   category: z.enum(["ROAD", "WATER", "ELECTRICITY", "SANITATION", "OTHER"]),
-  latitude: z.preprocess((val) => Number(val), z.number()),
-  longitude: z.preprocess((val) => Number(val), z.number()),
+  latitude: z.preprocess((value) => Number(value), z.number().finite()),
+  longitude: z.preprocess((value) => Number(value), z.number().finite()),
   address: z.string(),
   imageUrl: z.string().url().optional().nullable(),
 });
 
+const formatZodError = (error: z.ZodError) => {
+  const issues = error.issues.map((issue) => ({
+    path: issue.path,
+    message: issue.message,
+    code: issue.code,
+  }));
+
+  const message = issues
+    .map((issue) => `${issue.path.join(".") || "root"}: ${issue.message}`)
+    .join(", ");
+
+  return {
+    message,
+    issues,
+  };
+};
+
 // --- LOGIC ---
-export const createIssue = async (req: Request, res: Response) => {
+export const createIssue = async (req: AuthRequest, res: Response) => {
   try {
     const validatedData = issueSchema.parse(req.body);
-    const { userId } = (req as any).user;
+    const userId = req.user?.userId;
+    if (!userId) return sendError(res, "Unauthorized", 401);
+
     const category = validatedData.category;
     const isCritical = false;
 
@@ -50,116 +69,160 @@ export const createIssue = async (req: Request, res: Response) => {
         isCritical,
         reporter: { connect: { id: userId } },
         imageUrl,
-      } as any,
+      } as never,
     });
 
     await awardPoints(userId, 10, "Reported a new issue");
-    await createNotification(userId, "You earned 10 points for reporting a new issue!", "POINTS", (req as any).io);
+    await createNotification(
+      userId,
+      "You earned 10 points for reporting a new issue!",
+      "POINTS",
+      req.app.get("io"),
+    );
 
     return sendSuccess(res, issue, "Issue reported successfully", 201);
-  } catch (error: any) {
-    if (error instanceof z.ZodError) {
-      const msg = error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ');
-      return sendError(res, msg, 400, error.errors);
+  } catch (error: unknown) {
+    if (req.file) {
+      try {
+        fs.unlinkSync(req.file.path);
+      } catch {}
     }
-    return sendError(res, error.message);
+
+    if (error instanceof z.ZodError) {
+      const formatted = formatZodError(error);
+      return sendError(res, formatted.message, 400, formatted.issues);
+    }
+
+    return sendError(
+      res,
+      error instanceof Error ? error.message : "Internal server error",
+    );
   }
 };
 
 export const listIssues = async (req: Request, res: Response) => {
   try {
-    const { 
-      search, 
-      category, 
-      status, 
-      lat, 
-      lng, 
-      radius = 10, 
-      sortBy = "createdAt", 
-      order = "desc", 
-      page = 1, 
+    const {
+      search,
+      category,
+      status,
+      lat,
+      lng,
+      radius = 10,
+      sortBy = "createdAt",
+      order = "desc",
+      page = 1,
       limit = 10,
       reporterId,
-      assignedAuthorityId
+      assignedAuthorityId,
     } = req.query;
-    
+
     const pageNum = Math.max(1, Number(page));
     const limitNum = Math.max(1, Number(limit));
     const skip = (pageNum - 1) * limitNum;
     const take = limitNum;
 
-    const where: any = {};
+    const where: Record<string, unknown> = {};
     if (category) where.category = category;
     if (status) where.status = status;
     if (reporterId) where.reporterId = reporterId;
     if (assignedAuthorityId) where.assignedAuthorityId = assignedAuthorityId;
     if (search) {
       where.OR = [
-        { title: { contains: search as string, mode: 'insensitive' } },
-        { description: { contains: search as string, mode: 'insensitive' } },
-        { address: { contains: search as string, mode: 'insensitive' } }
+        { title: { contains: search as string, mode: "insensitive" } },
+        { description: { contains: search as string, mode: "insensitive" } },
+        { address: { contains: search as string, mode: "insensitive" } },
       ];
     }
 
-    // Standard Query without location
+    const sortField = typeof sortBy === "string" ? sortBy : "createdAt";
+    const sortOrder = order === "asc" ? "asc" : "desc";
+
     if (!lat || !lng) {
       const [issues, total] = await prisma.$transaction([
         prisma.issue.findMany({
-          where,
-          orderBy: { [sortBy as string]: order },
-          include: { 
+          where: where as never,
+          orderBy: { [sortField]: sortOrder },
+          include: {
             reporter: { select: { name: true, avatarUrl: true, points: true } },
-            comments: { include: { user: { select: { name: true, avatarUrl: true, points: true, role: true } } }, orderBy: { createdAt: "desc" } }
+            comments: {
+              include: {
+                user: {
+                  select: {
+                    name: true,
+                    avatarUrl: true,
+                    points: true,
+                    role: true,
+                  },
+                },
+              },
+              orderBy: { createdAt: "desc" },
+            },
           },
           skip,
           take,
         }),
-        prisma.issue.count({ where })
+        prisma.issue.count({ where: where as never }),
       ]);
 
-      return sendSuccess(res, { issues, total, page: pageNum, limit: limitNum, totalPages: Math.ceil(total / limitNum) });
+      return sendSuccess(res, {
+        issues,
+        total,
+        page: pageNum,
+        limit: limitNum,
+        totalPages: Math.ceil(total / limitNum),
+      });
     }
 
-    // Location-based filtering (requires fetching more and filtering manually for now)
-    // In a real production app, we would use PostGIS or a fast geospatial index.
     const userLat = Number(lat);
     const userLng = Number(lng);
     const userRadius = Number(radius);
 
-    // Fetch all matching items (up to a reasonable limit for small-scale apps)
-    // For large scale, this must be optimized with raw SQL and geospatial functions.
     const allMatchingIssues = await prisma.issue.findMany({
-      where,
-      orderBy: { [sortBy as string]: order },
-      include: { 
+      where: where as never,
+      orderBy: { [sortField]: sortOrder },
+      include: {
         reporter: { select: { name: true, avatarUrl: true, points: true } },
-        comments: { include: { user: { select: { name: true, avatarUrl: true, points: true, role: true } } }, orderBy: { createdAt: "desc" } }
-      }
+        comments: {
+          include: {
+            user: {
+              select: { name: true, avatarUrl: true, points: true, role: true },
+            },
+          },
+          orderBy: { createdAt: "desc" },
+        },
+      },
     });
 
     const filteredIssues = allMatchingIssues.filter((issue) => {
-      const R = 6371; // Earth radius in km
+      const earthRadiusKm = 6371;
       const dLat = (issue.latitude - userLat) * (Math.PI / 180);
       const dLng = (issue.longitude - userLng) * (Math.PI / 180);
-      const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + 
-                Math.cos(userLat * (Math.PI / 180)) * Math.cos(issue.latitude * (Math.PI / 180)) * 
-                Math.sin(dLng / 2) * Math.sin(dLng / 2);
+      const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(userLat * (Math.PI / 180)) *
+          Math.cos(issue.latitude * (Math.PI / 180)) *
+          Math.sin(dLng / 2) *
+          Math.sin(dLng / 2);
       const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-      return (R * c) <= userRadius;
+      return earthRadiusKm * c <= userRadius;
     });
 
     const total = filteredIssues.length;
     const paginatedIssues = filteredIssues.slice(skip, skip + take);
 
-    return sendSuccess(res, { 
-      issues: paginatedIssues, 
-      total, 
-      page: pageNum, 
-      limit: limitNum, 
-      totalPages: Math.ceil(total / limitNum) 
+    return sendSuccess(res, {
+      issues: paginatedIssues,
+      total,
+      page: pageNum,
+      limit: limitNum,
+      totalPages: Math.ceil(total / limitNum),
     });
-  } catch (error: any) {
-    return sendError(res, error.message);
+  } catch (error: unknown) {
+    return sendError(
+      res,
+      error instanceof Error ? error.message : "Internal server error",
+    );
   }
 };
 
@@ -169,126 +232,232 @@ export const getIssueDetails = async (req: Request, res: Response) => {
     const issue = await prisma.issue.findUnique({
       where: { id },
       include: {
-        reporter: { select: { id: true, name: true, avatarUrl: true, points: true } },
-        comments: { include: { user: { select: { name: true, avatarUrl: true, points: true, role: true } } }, orderBy: { createdAt: "desc" } },
-        _count: { select: { upvotes: true, participants: true } }
-      }
+        reporter: {
+          select: { id: true, name: true, avatarUrl: true, points: true },
+        },
+        comments: {
+          include: {
+            user: {
+              select: { name: true, avatarUrl: true, points: true, role: true },
+            },
+          },
+          orderBy: { createdAt: "desc" },
+        },
+        _count: { select: { upvotes: true, participants: true } },
+      },
     });
 
     if (!issue) return sendError(res, "Issue not found", 404);
     return sendSuccess(res, issue);
-  } catch (error: any) {
-    return sendError(res, error.message);
+  } catch (error: unknown) {
+    return sendError(
+      res,
+      error instanceof Error ? error.message : "Internal server error",
+    );
   }
 };
 
-export const upvoteIssue = async (req: Request, res: Response) => {
+export const upvoteIssue = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
-    const { userId } = (req as any).user;
+    const userId = req.user?.userId;
+    if (!userId) return sendError(res, "Unauthorized", 401);
 
     const existingUpvote = await prisma.upvote.findUnique({
-      where: { issueId_userId: { issueId: id, userId } }
+      where: { issueId_userId: { issueId: id, userId } },
     });
 
     if (existingUpvote) {
       const [, updatedIssue] = await prisma.$transaction([
         prisma.upvote.delete({ where: { id: existingUpvote.id } }),
-        prisma.issue.update({ where: { id }, data: { upvotesCount: { decrement: 1 } } })
+        prisma.issue.update({
+          where: { id },
+          data: { upvotesCount: { decrement: 1 } },
+        }),
       ]);
-      return sendSuccess(res, { upvotesCount: updatedIssue.upvotesCount, action: "removed" }, "Upvote removed");
+      return sendSuccess(
+        res,
+        { upvotesCount: updatedIssue.upvotesCount, action: "removed" },
+        "Upvote removed",
+      );
     }
 
     const [, issue] = await prisma.$transaction([
       prisma.upvote.create({ data: { issueId: id, userId } }),
-      prisma.issue.update({ where: { id }, data: { upvotesCount: { increment: 1 } } })
+      prisma.issue.update({
+        where: { id },
+        data: { upvotesCount: { increment: 1 } },
+      }),
     ]);
 
-    if (issue.upvotesCount === 10 || issue.upvotesCount === 50 || issue.upvotesCount === 100) {
-      await createNotification(issue.reporterId, `Your issue reached ${issue.upvotesCount} upvotes!`, "MILESTONE", (req as any).io);
-      if (issue.upvotesCount === 10) await awardPoints(issue.reporterId, 5, "Issue reached 10 upvotes milestone");
+    if (
+      issue.upvotesCount === 10 ||
+      issue.upvotesCount === 50 ||
+      issue.upvotesCount === 100
+    ) {
+      await createNotification(
+        issue.reporterId,
+        `Your issue reached ${issue.upvotesCount} upvotes!`,
+        "MILESTONE",
+        req.app.get("io"),
+      );
+      if (issue.upvotesCount === 10) {
+        await awardPoints(
+          issue.reporterId,
+          5,
+          "Issue reached 10 upvotes milestone",
+        );
+      }
     }
 
-    return sendSuccess(res, { upvotesCount: issue.upvotesCount, action: "added" }, "Issue upvoted");
-  } catch (error: any) {
-    return sendError(res, error.message);
+    return sendSuccess(
+      res,
+      { upvotesCount: issue.upvotesCount, action: "added" },
+      "Issue upvoted",
+    );
+  } catch (error: unknown) {
+    return sendError(
+      res,
+      error instanceof Error ? error.message : "Internal server error",
+    );
   }
 };
 
-export const joinIssue = async (req: Request, res: Response) => {
+export const joinIssue = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
-    const { userId } = (req as any).user;
+    const userId = req.user?.userId;
+    if (!userId) return sendError(res, "Unauthorized", 401);
 
     const existingParticipant = await prisma.issueParticipant.findUnique({
-      where: { issueId_userId: { issueId: id, userId } }
+      where: { issueId_userId: { issueId: id, userId } },
     });
 
-    if (existingParticipant) return sendError(res, "Already joined this issue", 400);
+    if (existingParticipant)
+      return sendError(res, "Already joined this issue", 400);
 
     await prisma.issueParticipant.create({ data: { issueId: id, userId } });
     await awardPoints(userId, 2, "Joined a community issue campaign");
 
     const issue = await prisma.issue.findUnique({ where: { id } });
-    if (issue) await createNotification(issue.reporterId, "Someone joined your reported issue!", "PARTICIPANT", (req as any).io);
+    if (issue) {
+      await createNotification(
+        issue.reporterId,
+        "Someone joined your reported issue!",
+        "PARTICIPANT",
+        req.app.get("io"),
+      );
+    }
 
     return sendSuccess(res, null, "Joined issue campaign successfully");
-  } catch (error: any) {
-    return sendError(res, error.message);
+  } catch (error: unknown) {
+    return sendError(
+      res,
+      error instanceof Error ? error.message : "Internal server error",
+    );
   }
 };
 
-export const addComment = async (req: Request, res: Response) => {
+export const addComment = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
-    const { userId } = (req as any).user;
-    const { content } = req.body;
-    if (!content) return sendError(res, "Comment content is required", 400);
+    const userId = req.user?.userId;
+    if (!userId) return sendError(res, "Unauthorized", 401);
+
+    const contentResult = z
+      .string()
+      .min(1, "Comment content is required")
+      .safeParse(req.body?.content);
+    if (!contentResult.success) {
+      return sendError(
+        res,
+        contentResult.error.issues[0]?.message || "Comment content is required",
+        400,
+      );
+    }
 
     const comment = await prisma.comment.create({
-      data: { content, issueId: id, userId },
-      include: { user: { select: { name: true, avatarUrl: true, points: true, role: true } } }
+      data: { content: contentResult.data, issueId: id, userId },
+      include: {
+        user: {
+          select: { name: true, avatarUrl: true, points: true, role: true },
+        },
+      },
     });
 
     return sendSuccess(res, comment, "Comment added");
-  } catch (error: any) {
-    return sendError(res, error.message);
+  } catch (error: unknown) {
+    return sendError(
+      res,
+      error instanceof Error ? error.message : "Internal server error",
+    );
   }
 };
 
-export const updateStatus = async (req: Request, res: Response) => {
+export const updateStatus = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
-    const { status } = req.body;
-    const { userId, role } = (req as any).user;
+    const statusResult = z
+      .enum(["OPEN", "IN_PROGRESS", "RESOLVED"])
+      .safeParse(req.body?.status);
+    if (!statusResult.success) {
+      return sendError(
+        res,
+        statusResult.error.issues[0]?.message || "Invalid status",
+        400,
+      );
+    }
 
+    const userId = req.user?.userId;
+    const role = req.user?.role;
+    if (!userId || !role) return sendError(res, "Unauthorized", 401);
+
+    const status = statusResult.data;
     const issue = await prisma.issue.findUnique({ where: { id } });
     if (!issue) return sendError(res, "Issue not found", 404);
 
     if (issue.reporterId !== userId && role !== "ADMIN") {
-      return sendError(res, "Only the original reporter can update the status", 403);
+      return sendError(
+        res,
+        "Only the original reporter can update the status",
+        403,
+      );
     }
 
     const updatedIssue = await prisma.issue.update({
       where: { id },
-      data: { status, resolvedAt: status === "RESOLVED" ? new Date() : null }
+      data: { status, resolvedAt: status === "RESOLVED" ? new Date() : null },
     });
 
     if (status === "RESOLVED" && issue.status !== "RESOLVED") {
-      await awardPoints(issue.reporterId, 20, "Your reported issue was marked as resolved");
-      await createNotification(issue.reporterId, "Your reported issue has been resolved! +20 points awarded.", "RESOLVED", (req as any).io);
-    } // Skip notification about other status changes if it's the reporter making them!
+      await awardPoints(
+        issue.reporterId,
+        20,
+        "Your reported issue was marked as resolved",
+      );
+      await createNotification(
+        issue.reporterId,
+        "Your reported issue has been resolved! +20 points awarded.",
+        "RESOLVED",
+        req.app.get("io"),
+      );
+    }
 
     return sendSuccess(res, updatedIssue, "Status updated");
-  } catch (error: any) {
-    return sendError(res, error.message);
+  } catch (error: unknown) {
+    return sendError(
+      res,
+      error instanceof Error ? error.message : "Internal server error",
+    );
   }
 };
 
-export const deleteIssue = async (req: Request, res: Response) => {
+export const deleteIssue = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
-    const { userId, role } = (req as any).user;
+    const userId = req.user?.userId;
+    const role = req.user?.role;
+    if (!userId || !role) return sendError(res, "Unauthorized", 401);
 
     const issue = await prisma.issue.findUnique({ where: { id } });
     if (!issue) return sendError(res, "Issue not found", 404);
@@ -299,8 +468,11 @@ export const deleteIssue = async (req: Request, res: Response) => {
 
     await prisma.issue.delete({ where: { id } });
     return sendSuccess(res, null, "Issue deleted successfully");
-  } catch (error: any) {
-    return sendError(res, error.message);
+  } catch (error: unknown) {
+    return sendError(
+      res,
+      error instanceof Error ? error.message : "Internal server error",
+    );
   }
 };
 

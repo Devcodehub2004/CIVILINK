@@ -1,6 +1,10 @@
 import { PrismaClient } from "@prisma/client";
 import jwt from "jsonwebtoken";
 import { Request, Response, NextFunction } from "express";
+import { v2 as cloudinary } from "cloudinary";
+import { Resend } from "resend";
+import multer, { FileFilterCallback } from "multer";
+import path from "path";
 
 // 1. Database (Prisma)
 export const prisma = new PrismaClient();
@@ -28,9 +32,9 @@ export const verifyRefreshToken = (token: string) => {
 };
 
 // 4. Response Helpers
-export const sendSuccess = (
+export const sendSuccess = <T>(
   res: Response,
-  data: any,
+  data: T,
   message: string = "Success",
   status: number = 200,
 ) => {
@@ -41,7 +45,7 @@ export const sendError = (
   res: Response,
   message: string,
   status: number = 500,
-  errors: any[] = [],
+  errors: unknown[] = [],
 ) => {
   return res.status(status).json({ success: false, message, errors });
 };
@@ -65,11 +69,15 @@ export const authenticate = (
   }
 
   const token = authHeader.split(" ")[1];
+  if (!token) {
+    return sendError(res, "Unauthorized: No token provided", 401);
+  }
+
   try {
     const decoded = verifyAccessToken(token);
     req.user = decoded;
     next();
-  } catch (error) {
+  } catch {
     return sendError(res, "Unauthorized: Invalid or expired token", 401);
   }
 };
@@ -88,7 +96,6 @@ export const authorize = (roles: string[]) => {
 };
 
 // 6. Cloudinary Configuration
-import { v2 as cloudinary } from "cloudinary";
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
@@ -97,9 +104,6 @@ cloudinary.config({
 export { cloudinary };
 
 // 7. Resend Configuration
-import { Resend } from "resend";
-
-// ✅ Correct — only called when actually needed
 function getResend() {
   const key = process.env.RESEND_API_KEY;
   if (!key) throw new Error("RESEND_API_KEY is not set");
@@ -111,7 +115,6 @@ export const sendOtpEmail = async (email: string, otp: string) => {
 
   const resend = getResend();
 
-  // Await the email send so it doesn't get cancelled by serverless environments
   const { data, error } = await resend.emails.send({
     from: `CiviLink <${fromEmail}>`,
     to: email,
@@ -144,9 +147,6 @@ export const sendOtpEmail = async (email: string, otp: string) => {
 };
 
 // 8. Multer (Upload) Configuration
-import multer from "multer";
-import path from "path";
-
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, "uploads/");
@@ -160,11 +160,15 @@ const storage = multer.diskStorage({
   },
 });
 
-const fileFilter = (req: any, file: any, cb: any) => {
+const fileFilter = (
+  req: Request,
+  file: Express.Multer.File,
+  cb: FileFilterCallback,
+) => {
   if (file.mimetype.startsWith("image/")) {
     cb(null, true);
   } else {
-    cb(new Error("Only images are allowed"), false);
+    cb(new Error("Only images are allowed"));
   }
 };
 
@@ -172,7 +176,7 @@ export const upload = multer({
   storage,
   fileFilter,
   limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB
+    fileSize: 5 * 1024 * 1024,
   },
 });
 
@@ -208,7 +212,9 @@ export const createNotification = async (
   userId: string,
   message: string,
   type: string,
-  io?: any,
+  io?: {
+    to?: (room: string) => { emit: (event: string, payload: unknown) => void };
+  } | null,
 ) => {
   try {
     const notification = await prisma.notification.create({
@@ -219,7 +225,7 @@ export const createNotification = async (
       },
     });
 
-    if (io) {
+    if (io?.to) {
       io.to(`user_${userId}`).emit("notification", notification);
     }
 
