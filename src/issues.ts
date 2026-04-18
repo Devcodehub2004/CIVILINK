@@ -416,10 +416,10 @@ export const updateStatus = async (req: AuthRequest, res: Response) => {
     const issue = await prisma.issue.findUnique({ where: { id } });
     if (!issue) return sendError(res, "Issue not found", 404);
 
-    if (issue.reporterId !== userId && role !== "ADMIN") {
+    if (issue.reporterId !== userId && role !== "AUTHORITY") {
       return sendError(
         res,
-        "Only the original reporter can update the status",
+        "Only the original reporter or an authority can update the status",
         403,
       );
     }
@@ -462,7 +462,7 @@ export const deleteIssue = async (req: AuthRequest, res: Response) => {
     const issue = await prisma.issue.findUnique({ where: { id } });
     if (!issue) return sendError(res, "Issue not found", 404);
 
-    if (issue.reporterId !== userId && role !== "ADMIN") {
+    if (issue.reporterId !== userId && role !== "AUTHORITY") {
       return sendError(res, "Unauthorized to delete this issue", 403);
     }
 

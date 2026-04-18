@@ -103,7 +103,7 @@ export const getPointHistory = async (req: Request, res: Response) => {
 
 // --- ROUTES ---
 
-router.get("/", authenticate, authorize(["ADMIN"]), listUsers);
+router.get("/", authenticate, authorize(["AUTHORITY"]), listUsers);
 router.get("/leaderboard", getLeaderboard);
 router.get("/:id", getUserProfile);
 router.put("/:id", authenticate, updateProfile);
