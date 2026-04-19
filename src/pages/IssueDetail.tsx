@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { ShareButton } from '../components/ShareButton';
 
 function formatTimeAgo(dateString: string) {
   const date = new Date(dateString);
@@ -178,17 +179,26 @@ export const IssueDetail = () => {
              <span className="font-bold uppercase tracking-tight">{issue.category}</span>
           </div>
           <div className="flex flex-col gap-1 items-end ml-auto">
-             <button
-               onClick={handleUpvote}
-               title="Upvote this issue"
-               className="flex items-center gap-3 bg-surface hover:bg-primary hover:text-on-primary transition-all px-6 py-3 rounded-xl border-2 border-on-surface shadow-[4px_4px_0px_#000] active:translate-y-1 active:translate-x-1 active:shadow-none group"
-             >
-               <span className="material-symbols-outlined font-black text-3xl group-hover:-translate-y-1 transition-transform">arrow_upward</span>
-               <div className="flex flex-col items-start leading-none text-left">
-                 <span className="font-black text-3xl">{issue._count?.upvotes || 0}</span>
-                 <span className="text-[10px] font-bold uppercase tracking-widest opacity-80">Points (Vote)</span>
-               </div>
-             </button>
+             <div className="flex items-center gap-4">
+               <ShareButton
+                 issueId={issue.id}
+                 title={issue.title}
+                 description={issue.description}
+                 category={issue.category}
+                 variant="detail"
+               />
+               <button
+                 onClick={handleUpvote}
+                 title="Upvote this issue"
+                 className="flex items-center gap-3 bg-surface hover:bg-primary hover:text-on-primary transition-all px-6 py-3 rounded-xl border-2 border-on-surface shadow-[4px_4px_0px_#000] active:translate-y-1 active:translate-x-1 active:shadow-none group"
+               >
+                 <span className="material-symbols-outlined font-black text-3xl group-hover:-translate-y-1 transition-transform">arrow_upward</span>
+                 <div className="flex flex-col items-start leading-none text-left">
+                   <span className="font-black text-3xl">{issue._count?.upvotes || 0}</span>
+                   <span className="text-[10px] font-bold uppercase tracking-widest opacity-80">Points (Vote)</span>
+                 </div>
+               </button>
+             </div>
           </div>
         </div>
       </header>

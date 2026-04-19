@@ -356,6 +356,21 @@ body {
     inset 0 1px 0 rgba(255, 255, 255, 0.88);
 }
 
+@keyframes share-pop {
+  0% {
+    opacity: 0;
+    transform: translateY(8px) scale(0.92);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-share-pop {
+  animation: share-pop 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -370,6 +385,7 @@ body {
   .animate-scale-pulse,
   .animate-pulse-glow,
   .animate-soft-pulse,
+  .animate-share-pop,
   .floating-icon,
   .ambient-bubble {
     animation: none !important;

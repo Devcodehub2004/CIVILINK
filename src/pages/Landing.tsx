@@ -5,6 +5,7 @@ import axios from "axios";
 import { useAuth } from "../context/AuthContext";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { ShareButton } from "../components/ShareButton";
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -576,6 +577,15 @@ export const Landing = () => {
                     </span>
                     {issue.commentCount || 0}
                   </span>
+
+                  <ShareButton
+                    issueId={issue.id}
+                    title={issue.title}
+                    description={issue.description}
+                    category={issue.category}
+                    variant="card"
+                    className="inline-flex items-center gap-2 rounded-full border border-white/70 bg-white/82 px-4 py-2 text-xs font-black uppercase tracking-[0.16em] shadow-[0_12px_30px_rgba(20,20,20,0.07)] transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/30 hover:bg-primary hover:text-on-primary group/share"
+                  />
                 </div>
 
                 <div className="flex items-center gap-2 text-xs uppercase tracking-[0.24em] text-on-surface/45">

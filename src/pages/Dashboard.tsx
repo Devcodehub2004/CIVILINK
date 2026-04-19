@@ -4,6 +4,7 @@ import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { ShareButton } from '../components/ShareButton';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -263,6 +264,13 @@ export const Dashboard = () => {
                         <span className="material-symbols-outlined text-sm">chat_bubble</span>
                         {issue.commentCount || 0}
                       </span>
+                      <ShareButton
+                        issueId={issue.id}
+                        title={issue.title}
+                        description={issue.description}
+                        category={issue.category}
+                        variant="card"
+                      />
                     </div>
                     <span className="label-sm opacity-40 group-hover:opacity-60">{formatTimeAgo(issue.createdAt)} AGO</span>
                   </div>
