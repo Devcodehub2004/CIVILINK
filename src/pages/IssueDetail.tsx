@@ -2,32 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { ShareButton } from '../components/ShareButton';
+import { formatTimeAgo, getBadge } from '../utils';
 
-function formatTimeAgo(dateString: string) {
-  const date = new Date(dateString);
-  const now = new Date();
-  const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-
-  if (seconds < 60) return 'Just now';
-  const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes}m ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  if (days < 7) return `${days}d ago`;
-  const weeks = Math.floor(days / 7);
-  if (weeks < 4) return `${weeks}w ago`;
-  const months = Math.floor(days / 30);
-  if (months < 12) return `${months}mo ago`;
-  return `${Math.floor(days / 365)}y ago`;
-}
-
-export function getBadge(points: number) {
-  if (points >= 100) return "🌟 Community Leader";
-  if (points >= 50) return "🔥 Active Voice";
-  if (points >= 10) return "✨ Verified Citizen";
-  return "🌱 New Member";
-}
 
 export const IssueDetail = () => {
   const { id } = useParams();
@@ -187,18 +163,25 @@ export const IssueDetail = () => {
                  category={issue.category}
                  variant="detail"
                />
-               <button
-                 onClick={handleUpvote}
-                 title="Upvote this issue"
-                 className="flex items-center gap-3 bg-surface hover:bg-primary hover:text-on-primary transition-all px-6 py-3 rounded-xl border-2 border-on-surface shadow-[4px_4px_0px_#000] active:translate-y-1 active:translate-x-1 active:shadow-none group"
-               >
-                 <span className="material-symbols-outlined font-black text-3xl group-hover:-translate-y-1 transition-transform">arrow_upward</span>
-                 <div className="flex flex-col items-start leading-none text-left">
-                   <span className="font-black text-3xl">{issue._count?.upvotes || 0}</span>
-                   <span className="text-[10px] font-bold uppercase tracking-widest opacity-80">Points (Vote)</span>
-                 </div>
-               </button>
-             </div>
+                <button
+                  onClick={handleUpvote}
+                  title="Upvote this issue"
+                  className="flex items-center gap-3 bg-surface hover:bg-primary hover:text-on-primary transition-all px-6 py-3 rounded-xl border-2 border-on-surface shadow-[4px_4px_0px_#000] active:translate-y-1 active:translate-x-1 active:shadow-none group"
+                >
+                  <span className="material-symbols-outlined font-black text-3xl group-hover:-translate-y-1 transition-transform">arrow_upward</span>
+                  <div className="flex flex-col items-start leading-none text-left">
+                    <span className="font-black text-3xl">{issue._count?.upvotes || 0}</span>
+                    <span className="text-[10px] font-bold uppercase tracking-widest opacity-80">Points (Vote)</span>
+                  </div>
+                </button>
+                <div className="hidden sm:flex items-center gap-3 bg-surface px-6 py-3 rounded-xl border-2 border-on-surface shadow-[4px_4px_0px_#000]">
+                  <span className="material-symbols-outlined font-black text-3xl text-secondary">forum</span>
+                  <div className="flex flex-col items-start leading-none text-left">
+                    <span className="font-black text-3xl">{issue.comments?.length || 0}</span>
+                    <span className="text-[10px] font-bold uppercase tracking-widest opacity-80">Feedback</span>
+                  </div>
+                </div>
+              </div>
           </div>
         </div>
       </header>

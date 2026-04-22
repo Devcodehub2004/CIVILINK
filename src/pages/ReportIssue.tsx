@@ -14,12 +14,12 @@ import {
   Send,
   Loader2,
   X,
-  Edit2
+  Edit2,
+  Scan
 } from 'lucide-react';
+import { CameraCapture } from '../components/CameraCapture';
 
-function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
+import { cn } from '../utils';
 
 export const ReportIssue = () => {
   const [formData, setFormData] = useState({
@@ -33,11 +33,19 @@ export const ReportIssue = () => {
   });
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+  const handleImageUpload = async (eOrFile: React.ChangeEvent<HTMLInputElement> | File) => {
+    let file: File | undefined;
+    
+    if (eOrFile instanceof File) {
+      file = eOrFile;
+    } else {
+      file = eOrFile.target.files?.[0];
+    }
+
     if (!file) return;
 
     setUploading(true);
@@ -202,6 +210,25 @@ export const ReportIssue = () => {
               <label className="block text-[10px] font-bold text-neutral-400 tracking-[0.2em] uppercase mb-4">
                 MEDIA CAPTURE
               </label>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <button
+                  type="button"
+                  onClick={() => setIsCameraOpen(true)}
+                  className="flex items-center justify-center gap-3 bg-primary/10 hover:bg-primary/20 text-primary rounded-2xl py-4 transition-all group"
+                >
+                  <Camera className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                  <span className="text-[10px] font-bold tracking-widest uppercase">TAKE LIVE PHOTO</span>
+                </button>
+                <label
+                  htmlFor="image-upload"
+                  className="flex items-center justify-center gap-3 bg-[#F3F3F3] hover:bg-[#EBEBEB] text-[#777777] rounded-2xl py-4 cursor-pointer transition-all group"
+                >
+                  <Scan className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                  <span className="text-[10px] font-bold tracking-widest uppercase">BROWSE FILES</span>
+                </label>
+              </div>
+
               <div className="relative w-full">
                 <input
                   type="file"
@@ -210,17 +237,19 @@ export const ReportIssue = () => {
                   className="hidden"
                   id="image-upload"
                 />
-                <label
-                  htmlFor="image-upload"
+                <div
                   className={cn(
-                    "w-full aspect-[16/9] border-2 border-dashed rounded-[32px] flex flex-col items-center justify-center gap-3 transition-all cursor-pointer overflow-hidden relative group",
+                    "w-full aspect-[16/9] border-2 border-dashed rounded-[32px] flex flex-col items-center justify-center gap-3 transition-all overflow-hidden relative group",
                     formData.imageUrl 
                       ? "border-primary border-solid" 
-                      : "border-[#D1D1D1] text-[#A3A3A3] hover:border-primary hover:bg-primary/[0.02] hover:text-primary"
+                      : "border-[#D1D1D1] text-[#A3A3A3]"
                   )}
                 >
                   {uploading ? (
-                    <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                    <div className="flex flex-col items-center gap-3">
+                      <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                      <span className="text-[9px] font-black tracking-widest text-primary animate-pulse uppercase">TRANSMITTING IMAGE...</span>
+                    </div>
                   ) : formData.imageUrl ? (
                     <>
                       <img src={formData.imageUrl} alt="Preview" className="w-full h-full object-cover" />
@@ -241,13 +270,23 @@ export const ReportIssue = () => {
                     </>
                   ) : (
                     <>
-                      <Camera className="w-8 h-8 opacity-50 group-hover:opacity-100 transition-all" />
-                      <span className="text-[9px] font-bold tracking-[0.2em] uppercase">ATTACH EVIDENCE</span>
+                      <div className="w-12 h-12 rounded-full bg-[#F3F3F3] flex items-center justify-center text-[#A3A3A3] group-hover:text-primary transition-colors">
+                        <Camera className="w-6 h-6" />
+                      </div>
+                      <span className="text-[9px] font-bold tracking-[0.2em] uppercase">EVIDENCE PREVIEW</span>
                     </>
                   )}
-                </label>
+                </div>
               </div>
             </div>
+
+            {/* Camera Overlay */}
+            {isCameraOpen && (
+              <CameraCapture 
+                onCapture={(file) => handleImageUpload(file)}
+                onClose={() => setIsCameraOpen(false)}
+              />
+            )}
 
             <button 
               disabled={loading || uploading}

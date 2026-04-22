@@ -6,28 +6,8 @@ import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { ShareButton } from '../components/ShareButton';
 
-function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
+import { cn, formatTimeAgo } from '../utils';
 
-function formatTimeAgo(dateString: string) {
-  const date = new Date(dateString);
-  const now = new Date();
-  const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-
-  if (seconds < 60) return 'Just now';
-  const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes}m ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  if (days < 7) return `${days}d ago`;
-  const weeks = Math.floor(days / 7);
-  if (weeks < 4) return `${weeks}w ago`;
-  const months = Math.floor(days / 30);
-  if (months < 12) return `${months}mo ago`;
-  return `${Math.floor(days / 365)}y ago`;
-}
 
 export const Dashboard = () => {
   const { user, logout } = useAuth();
@@ -90,7 +70,10 @@ export const Dashboard = () => {
       
       setMyIssues(prevIssues => prevIssues.map(issue => {
         if (issue.id === issueId) {
-          return { ...issue, commentCount: (issue.commentCount || 0) + 1 };
+          return { 
+            ...issue, 
+            comments: [res.data.data, ...(issue.comments || [])] 
+          };
         }
         return issue;
       }));
@@ -262,7 +245,7 @@ export const Dashboard = () => {
                         className="flex items-center gap-1 cursor-pointer hover:text-primary transition-colors hover:scale-110 active:scale-95"
                       >
                         <span className="material-symbols-outlined text-sm">chat_bubble</span>
-                        {issue.commentCount || 0}
+                        {issue.comments?.length || 0}
                       </span>
                       <ShareButton
                         issueId={issue.id}
