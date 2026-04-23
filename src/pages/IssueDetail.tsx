@@ -112,19 +112,23 @@ export const IssueDetail = () => {
               )}
               <button 
                 onClick={async () => {
-                  if(window.confirm('Erase this record from the archive?')) {
+                  if(window.confirm('Are you sure you want to delete this report? This action cannot be undone.')) {
                     try {
-                      await axios.delete(`/api/issues/${issue.id}`);
-                      navigate('/dashboard');
+                      const res = await axios.delete(`/api/issues/${issue.id}`);
+                      if (res.data.success) {
+                        navigate('/dashboard');
+                      }
                     } catch (err) {
-                      alert('Deletion failed');
+                      console.error("Delete error", err);
+                      alert('Deletion failed. Make sure you have permission to delete this.');
                     }
                   }
                 }}
                 title="Delete this report"
-                className="material-symbols-outlined text-primary hover:text-on-surface transition-colors"
+                className="label-sm px-4 py-2 rounded-full border border-[#EF4444] text-[#EF4444] hover:bg-[#EF4444] hover:text-white transition-colors flex items-center"
               >
-                delete
+                <span className="material-symbols-outlined text-sm mr-1">delete</span>
+                Delete
               </button>
             </div>
           )}

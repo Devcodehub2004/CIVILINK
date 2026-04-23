@@ -466,7 +466,12 @@ export const deleteIssue = async (req: AuthRequest, res: Response) => {
       return sendError(res, "Unauthorized to delete this issue", 403);
     }
 
-    await prisma.issue.delete({ where: { id } });
+    await prisma.$transaction([
+      prisma.issueParticipant.deleteMany({ where: { issueId: id } }),
+      prisma.upvote.deleteMany({ where: { issueId: id } }),
+      prisma.comment.deleteMany({ where: { issueId: id } }),
+      prisma.issue.delete({ where: { id } })
+    ]);
     return sendSuccess(res, null, "Issue deleted successfully");
   } catch (error: unknown) {
     return sendError(
