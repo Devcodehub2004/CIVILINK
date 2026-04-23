@@ -75,6 +75,13 @@ const systemCards = [
   },
 ];
 
+const civicQuotes = [
+  "See it. Report it. Fix it.",
+  "Trust comes from transparency.",
+  "Small reports, big changes.",
+  "Your voice for a better city.",
+];
+
 export const Landing = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -91,6 +98,14 @@ export const Landing = () => {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [quoteIndex, setQuoteIndex] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setQuoteIndex((prev) => (prev + 1) % civicQuotes.length);
+    }, 4000);
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -205,21 +220,26 @@ export const Landing = () => {
             className="relative"
           >
             <div className="glass-panel rounded-[2rem] p-6 md:p-10">
-              <div className="mb-8 inline-flex items-center gap-3 rounded-full border border-white/60 bg-white/75 px-4 py-2 shadow-[0_12px_30px_rgba(20,20,20,0.06)]">
+              <div className="mb-8 inline-flex items-center gap-3 rounded-full border border-white/60 bg-white/75 px-4 py-2 shadow-[0_12px_30px_rgba(20,20,20,0.06)] min-w-[280px]">
                 <span className="h-2.5 w-2.5 rounded-full bg-primary animate-soft-pulse" />
-                <span className="text-[10px] font-black uppercase tracking-[0.34em] text-on-surface/60">
-                  Professional civic operating layer
-                </span>
+                <motion.span 
+                  key={quoteIndex}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="text-[10px] font-black uppercase tracking-[0.34em] text-on-surface/60"
+                >
+                  {civicQuotes[quoteIndex]}
+                </motion.span>
               </div>
 
               <h1 className="display-lg max-w-4xl text-on-surface">
-                Floating civic intelligence for faster local action.
+                Smart reporting for faster local action.
               </h1>
 
               <p className="mt-6 max-w-2xl text-base leading-8 text-on-surface/72 md:text-lg">
-                CiviLink turns scattered complaints into a visible, prioritized,
-                accountable public workflow. Citizens report, communities
-                amplify, and authorities respond with transparency.
+                Report issues in your neighborhood, get support from your community, 
+                and see them get fixed faster than ever.
               </p>
 
               <div className="mt-10 flex flex-wrap gap-4">

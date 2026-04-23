@@ -16,7 +16,7 @@ export const Navbar = () => {
 
   const navLinks = [
     { label: "HOME", path: "/", icon: "home" },
-    { label: "EXPLORE", path: "/issues", icon: "explore" },
+    { label: "RANKING", path: "/ranking", icon: "leaderboard" },
     { label: "REPORT", path: "/report", icon: "add_circle" },
     {
       label: user ? "PROFILE" : "LOGIN",

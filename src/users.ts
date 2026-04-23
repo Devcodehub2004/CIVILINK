@@ -75,6 +75,31 @@ export const getLeaderboard = async (req: Request, res: Response) => {
   }
 };
 
+export const getCitizenRanking = async (req: Request, res: Response) => {
+  try {
+    const topCitizens = await prisma.user.findMany({
+      orderBy: {
+        reportedIssues: {
+          _count: "desc"
+        }
+      },
+      take: 10,
+      select: {
+        id: true,
+        name: true,
+        avatarUrl: true,
+        points: true,
+        _count: {
+          select: { reportedIssues: true }
+        }
+      }
+    });
+    return sendSuccess(res, topCitizens);
+  } catch (error: any) {
+    return sendError(res, error.message);
+  }
+};
+
 export const getUserIssues = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -105,6 +130,7 @@ export const getPointHistory = async (req: Request, res: Response) => {
 
 router.get("/", authenticate, authorize(["AUTHORITY"]), listUsers);
 router.get("/leaderboard", getLeaderboard);
+router.get("/ranking", getCitizenRanking);
 router.get("/:id", getUserProfile);
 router.put("/:id", authenticate, updateProfile);
 router.get("/:id/issues", getUserIssues);

@@ -66,7 +66,7 @@ export const Dashboard = () => {
     if (!commentContent.trim()) return;
 
     try {
-      await axios.post(`/api/issues/${issueId}/comments`, { content: commentContent });
+      const res = await axios.post(`/api/issues/${issueId}/comments`, { content: commentContent });
       
       setMyIssues(prevIssues => prevIssues.map(issue => {
         if (issue.id === issueId) {
