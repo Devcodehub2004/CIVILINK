@@ -18,6 +18,7 @@ import {
   Scan
 } from 'lucide-react';
 import { CameraCapture } from '../components/CameraCapture';
+import { LocationPicker } from '../components/LocationPicker';
 
 import { cn } from '../utils';
 
@@ -27,8 +28,8 @@ export const ReportIssue = () => {
     description: '',
     category: 'ROAD',
     address: '',
-    latitude: 23.8103,
-    longitude: 90.4125,
+    latitude: 20.2961,
+    longitude: 85.8245,
     imageUrl: ''
   });
   const [loading, setLoading] = useState(false);
@@ -163,7 +164,7 @@ export const ReportIssue = () => {
               <label className="block text-[10px] font-bold text-neutral-400 tracking-[0.2em] uppercase mb-4">
                 PRECISE LOCATION
               </label>
-              <div className="relative">
+              <div className="relative mb-6">
                 <input 
                   type="text" 
                   required
@@ -174,6 +175,13 @@ export const ReportIssue = () => {
                 />
                 <MapPin className="absolute right-6 top-1/2 -translate-y-1/2 w-5 h-5 text-primary" />
               </div>
+
+              <LocationPicker 
+                lat={formData.latitude} 
+                lng={formData.longitude} 
+                onChange={(lat, lng) => setFormData(prev => ({ ...prev, latitude: lat, longitude: lng }))}
+                onAddressChange={(address) => setFormData(prev => ({ ...prev, address }))}
+              />
             </div>
           </div>
 

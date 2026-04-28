@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { ShareButton } from '../components/ShareButton';
 import { formatTimeAgo, getBadge } from '../utils';
+import { StaticLocationMap } from '../components/LocationPicker';
 
 
 export const IssueDetail = () => {
@@ -198,14 +199,20 @@ export const IssueDetail = () => {
       </section>
 
       {issue.imageUrl ? (
-        <div className="w-full bg-on-surface/5 rounded-3xl overflow-hidden border-2 border-on-surface">
+        <div className="w-full bg-on-surface/5 rounded-3xl overflow-hidden border-2 border-on-surface mb-8">
           <img src={issue.imageUrl} alt="Evidence" className="w-full object-contain max-h-[600px]" />
         </div>
       ) : (
-        <div className="aspect-video w-full bg-on-surface/5 rounded-3xl flex items-center justify-center border-2 border-dashed border-on-surface/10">
+        <div className="aspect-video w-full bg-on-surface/5 rounded-3xl flex items-center justify-center border-2 border-dashed border-on-surface/10 mb-8">
           <span className="material-symbols-outlined text-6xl opacity-20 text-on-surface">image_not_supported</span>
         </div>
       )}
+
+      {/* Map Section */}
+      <section className="mb-16">
+        <span className="label-sm text-outline block mb-4 uppercase">Geospatial Recognition</span>
+        <StaticLocationMap lat={issue.latitude} lng={issue.longitude} />
+      </section>
 
       {/* Comments Section */}
       <section className="mt-16 border-t border-on-surface/10 pt-12">
