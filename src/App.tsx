@@ -19,6 +19,7 @@ import { IssueDetail } from "./pages/IssueDetail";
 import { ReportIssue } from "./pages/ReportIssue";
 import { Profile } from "./pages/Profile";
 import { Leaderboard } from "./pages/Leaderboard";
+import { ForgotPassword } from "./pages/ForgotPassword";
 
 function App() {
   return (
@@ -33,6 +34,7 @@ function App() {
               <Route path="/" element={<Landing />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/issues/:id" element={<IssueDetail />} />
               <Route path="/ranking" element={<Leaderboard />} />
 
