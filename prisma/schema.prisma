@@ -15,12 +15,14 @@ datasource db {
 enum Role {
   CITIZEN
   AUTHORITY
+  ADMIN
 }
 
 enum IssueStatus {
   OPEN
   IN_PROGRESS
   RESOLVED
+  REJECTED
 }
 
 enum Category {

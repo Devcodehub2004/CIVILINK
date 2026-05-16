@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "tsx server.ts",
-    "build": "prisma generate && prisma db push && vite build",
+    "build": "prisma generate && prisma db push --accept-data-loss && vite build",
     "start": "tsx server.ts",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
