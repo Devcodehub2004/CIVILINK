@@ -36,6 +36,7 @@ export const ReportIssue = () => {
   const [uploading, setUploading] = useState(false);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [error, setError] = useState('');
+  const [isSuccess, setIsSuccess] = useState(false);
   const navigate = useNavigate();
 
   const handleImageUpload = async (eOrFile: React.ChangeEvent<HTMLInputElement> | File) => {
@@ -93,7 +94,7 @@ export const ReportIssue = () => {
     try {
       const res = await axios.post('/api/issues', formData);
       if (res.data.success) {
-        navigate('/dashboard');
+        setIsSuccess(true);
       }
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to report issue');
@@ -101,6 +102,43 @@ export const ReportIssue = () => {
       setLoading(false);
     }
   };
+
+  if (isSuccess) {
+    return (
+      <div className="min-h-screen bg-surface flex items-center justify-center p-6 relative overflow-hidden">
+        <div 
+          className="fixed inset-0 pointer-events-none z-[9999] opacity-[0.04]"
+          style={{ backgroundImage: 'url("https://grainy-gradients.vercel.app/noise.svg")' }}
+        />
+        <div className="max-w-md w-full text-center space-y-12 animate-float relative z-10">
+          <div className="relative inline-block">
+            <div className="w-32 h-32 bg-primary/10 rounded-full flex items-center justify-center mb-8 mx-auto ring-1 ring-primary/20">
+              <Send className="w-12 h-12 text-primary" />
+            </div>
+            <div className="absolute -top-4 -right-4 w-12 h-12 bg-on-surface text-surface rounded-full flex items-center justify-center font-black text-sm">
+              +10
+            </div>
+          </div>
+          
+          <div className="space-y-6">
+            <h1 className="text-6xl font-display tracking-tighter uppercase leading-[0.85]">
+              TRANSMISSION<br /><span className="text-primary">COMPLETE.</span>
+            </h1>
+            <p className="text-neutral-500 italic text-lg leading-relaxed">
+              Your report has been successfully logged into the central civic ledger. Your contribution has earned you 10 reputation points.
+            </p>
+          </div>
+
+          <button 
+            onClick={() => navigate('/dashboard')}
+            className="w-full bg-on-surface text-white rounded-[24px] py-6 font-bold uppercase text-sm tracking-[0.2em] hover:bg-black hover:-translate-y-1 transition-all shadow-[0_20px_40px_-10px_rgba(0,0,0,0.3)]"
+          >
+            RETURN TO COMMAND CENTER
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-surface relative isolate py-20 px-6">

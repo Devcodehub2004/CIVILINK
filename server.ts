@@ -57,6 +57,11 @@ async function startServer() {
       socket.join(`issue_${issueId}`);
     });
 
+    socket.on("join_user", (userId) => {
+      socket.join(`user_${userId}`);
+      console.log(`User ${userId} joined their notification room`);
+    });
+
     socket.on("disconnect", () => {
       console.log("User disconnected");
     });

@@ -2,8 +2,10 @@ import React, { useState, useEffect, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
+import { useSocket } from "../context/SocketContext";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { Bell, CheckCircle2, MessageSquare, Flame, AlertCircle } from "lucide-react";
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -11,8 +13,74 @@ function cn(...inputs: ClassValue[]) {
 
 export const Navbar = () => {
   const { user, logout } = useAuth();
+  const { socket } = useSocket();
   const location = useLocation();
   const navigate = useNavigate();
+
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const unreadCount = notifications.filter(n => !n.isRead).length;
+
+  useEffect(() => {
+    if (user) {
+      fetchNotifications();
+    }
+  }, [user]);
+
+  const [toast, setToast] = useState<any | null>(null);
+
+  useEffect(() => {
+    if (socket) {
+      socket.on('notification', (notification: any) => {
+        setNotifications(prev => [notification, ...prev]);
+        setToast(notification);
+        setTimeout(() => setToast(null), 5000);
+      });
+
+      return () => {
+        socket.off('notification');
+      };
+    }
+  }, [socket]);
+
+  const fetchNotifications = async () => {
+    try {
+      const res = await axios.get('/api/notifications');
+      if (res.data.success) {
+        setNotifications(res.data.data);
+      }
+    } catch (err) {
+      console.error('Failed to fetch notifications', err);
+    }
+  };
+
+  const markAsRead = async (id: string) => {
+    try {
+      await axios.patch(`/api/notifications/${id}/read`);
+      setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
+    } catch (err) {
+      console.error('Failed to mark as read', err);
+    }
+  };
+
+  const markAllAsRead = async () => {
+    try {
+      await axios.patch('/api/notifications/read-all');
+      setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+    } catch (err) {
+      console.error('Failed to mark all as read', err);
+    }
+  };
+
+  const getNotificationIcon = (type: string) => {
+    switch (type) {
+      case 'POINTS': return <CheckCircle2 className="w-4 h-4 text-primary" />;
+      case 'MILESTONE': return <Flame className="w-4 h-4 text-orange-500" />;
+      case 'PARTICIPANT': return <MessageSquare className="w-4 h-4 text-blue-500" />;
+      case 'RESOLVED': return <CheckCircle2 className="w-4 h-4 text-green-500" />;
+      default: return <AlertCircle className="w-4 h-4 text-outline" />;
+    }
+  };
 
   const navLinks = [
     { label: "HOME", path: "/", icon: "home" },
@@ -202,6 +270,76 @@ export const Navbar = () => {
             </button>
 
             {user && (
+              <div className="relative">
+                <button
+                  onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
+                  className="relative flex h-11 w-11 items-center justify-center rounded-full border border-white/50 bg-white/80 text-on-surface shadow-[0_10px_30px_rgba(20,20,20,0.08)] transition-all duration-300 hover:-translate-y-0.5 hover:border-primary hover:bg-primary hover:text-on-primary active:scale-95"
+                >
+                  <Bell className="w-5 h-5" />
+                  {unreadCount > 0 && (
+                    <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-black text-on-primary ring-2 ring-white">
+                      {unreadCount}
+                    </span>
+                  )}
+                </button>
+
+                {isNotificationsOpen && (
+                  <div className="absolute right-0 top-full z-[80] mt-4 w-80 overflow-hidden rounded-[24px] border border-white/60 bg-white/95 shadow-[0_24px_80px_rgba(20,20,20,0.15)] backdrop-blur-2xl">
+                    <div className="flex items-center justify-between border-b border-on-surface/5 bg-on-surface/5 px-6 py-4">
+                      <span className="text-xs font-black uppercase tracking-[0.2em] text-on-surface">
+                        Notifications
+                      </span>
+                      {unreadCount > 0 && (
+                        <button 
+                          onClick={markAllAsRead}
+                          className="text-[10px] font-bold uppercase tracking-widest text-primary hover:underline"
+                        >
+                          Mark all read
+                        </button>
+                      )}
+                    </div>
+                    <div className="max-h-[400px] overflow-y-auto">
+                      {notifications.length > 0 ? (
+                        notifications.map((n) => (
+                          <div
+                            key={n.id}
+                            onClick={() => markAsRead(n.id)}
+                            className={cn(
+                              "flex gap-4 border-b border-on-surface/5 px-6 py-5 transition-colors hover:bg-on-surface/5",
+                              !n.isRead && "bg-primary/5"
+                            )}
+                          >
+                            <div className="mt-1 shrink-0">
+                              {getNotificationIcon(n.type)}
+                            </div>
+                            <div className="flex flex-col gap-1">
+                              <p className={cn(
+                                "text-sm leading-relaxed text-on-surface",
+                                !n.isRead ? "font-bold" : "font-medium opacity-70"
+                              )}>
+                                {n.message}
+                              </p>
+                              <span className="text-[10px] font-bold uppercase tracking-widest opacity-40">
+                                {new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                              </span>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="flex flex-col items-center justify-center py-12 opacity-30">
+                          <Bell className="mb-2 h-8 w-8" />
+                          <p className="text-xs font-black uppercase tracking-widest">
+                            No alerts found
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {user && (
               <div className="relative hidden md:block shrink-0">
                 <button
                   onClick={() =>
@@ -323,6 +461,23 @@ export const Navbar = () => {
           );
         })}
       </nav>
+      {/* Real-time Toast */}
+      {toast && (
+        <div className="fixed bottom-24 right-6 z-[100] animate-share-pop max-w-sm w-full">
+          <div className="bg-on-surface text-surface p-6 rounded-3xl shadow-2xl flex items-center gap-4 border border-white/10 backdrop-blur-xl">
+            <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center shrink-0">
+              {getNotificationIcon(toast.type)}
+            </div>
+            <div className="flex-1">
+              <p className="text-[10px] font-black uppercase tracking-widest opacity-40 mb-1">SYSTEM ALERT // REAL-TIME</p>
+              <p className="text-sm font-bold leading-tight">{toast.message}</p>
+            </div>
+            <button onClick={() => setToast(null)} className="opacity-40 hover:opacity-100 transition-opacity">
+              <span className="material-symbols-outlined text-sm">close</span>
+            </button>
+          </div>
+        </div>
+      )}
     </>
   );
 };

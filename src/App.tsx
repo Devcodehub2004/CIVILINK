@@ -6,6 +6,7 @@ import {
   Navigate,
 } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
+import { SocketProvider } from "./context/SocketContext";
 import { Navbar } from "./components/Navbar";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { AmbientBubbles } from "./components/AmbientBubbles";
@@ -24,7 +25,8 @@ import { ForgotPassword } from "./pages/ForgotPassword";
 function App() {
   return (
     <AuthProvider>
-      <Router>
+      <SocketProvider>
+        <Router>
         <div className="relative min-h-screen overflow-hidden bg-surface text-on-surface font-sans selection:bg-on-surface selection:text-surface flex flex-col transition-colors duration-500">
           <AmbientBubbles />
           <div className="pointer-events-none absolute inset-x-0 top-0 h-[32rem] bg-[radial-gradient(circle_at_top,rgba(255,79,0,0.16),transparent_58%)]" />
@@ -83,7 +85,8 @@ function App() {
             </div>
           </footer>
         </div>
-      </Router>
+        </Router>
+      </SocketProvider>
     </AuthProvider>
   );
 }

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'motion/react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { clsx, type ClassValue } from 'clsx';
@@ -42,6 +43,8 @@ export const Dashboard = () => {
     fetchMyIssues();
   }, [sortBy, page, user.id]);
 
+  const [upvotedIssueId, setUpvotedIssueId] = useState<string | null>(null);
+
   const handleUpvote = async (e: React.MouseEvent, issueId: string) => {
     e.preventDefault();
     e.stopPropagation();
@@ -49,6 +52,9 @@ export const Dashboard = () => {
       const res = await axios.post(`/api/issues/${issueId}/upvote`);
       const { upvotesCount } = res.data.data;
       
+      setUpvotedIssueId(issueId);
+      setTimeout(() => setUpvotedIssueId(null), 1000);
+
       setMyIssues(prevIssues => prevIssues.map(issue => {
         if (issue.id === issueId) {
           return { ...issue, upvotesCount };
@@ -230,8 +236,20 @@ export const Dashboard = () => {
                       <span 
                         onClick={(e) => handleUpvote(e, issue.id)}
                         title="Upvote this report"
-                        className="flex items-center gap-1 cursor-pointer hover:text-primary transition-colors hover:scale-110 active:scale-95"
+                        className="flex items-center gap-1 cursor-pointer hover:text-primary transition-colors hover:scale-110 active:scale-95 relative"
                       >
+                        <AnimatePresence>
+                          {upvotedIssueId === issue.id && (
+                            <motion.span
+                              initial={{ opacity: 0, y: 0, scale: 0.5 }}
+                              animate={{ opacity: 1, y: -40, scale: 1.2 }}
+                              exit={{ opacity: 0 }}
+                              className="absolute left-0 text-primary font-black z-50 pointer-events-none text-lg"
+                            >
+                              +1
+                            </motion.span>
+                          )}
+                        </AnimatePresence>
                         <span className="material-symbols-outlined text-sm">thumb_up</span>
                         {issue.upvotesCount || 0}
                       </span>

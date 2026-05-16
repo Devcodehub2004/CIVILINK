@@ -19,7 +19,7 @@ async function main() {
     data: {
       name: "Admin User",
       email: "admin@civilink.gov",
-      passwordHash: null,
+      passwordHash,
       phone: "+1111111111",
       role: Role.ADMIN,
     },
@@ -30,7 +30,7 @@ async function main() {
     data: {
       name: "Arjun Kumar",
       email: "arjun@example.com",
-      passwordHash: null,
+      passwordHash,
       phone: "+3333333333",
       role: Role.CITIZEN,
       points: 50,
